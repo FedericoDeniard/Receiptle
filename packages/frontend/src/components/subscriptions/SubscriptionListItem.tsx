@@ -36,7 +36,7 @@ export function SubscriptionListItem({ candidate }: SubscriptionListItemProps) {
 
   return (
     <LazyMotion features={domAnimation}>
-      <article className="flex flex-col rounded-xl border border-[var(--text-secondary)]/20 bg-[var(--bg-primary)] shadow-sm hover:border-[var(--text-secondary)]/40 hover:bg-[var(--bg-secondary)]/20 transition-all">
+      <article className="flex flex-col rounded-xl border border-[var(--text-secondary)]/20 bg-[var(--bg-primary)] shadow-sm hover:border-[var(--text-secondary)]/40 hover:bg-[var(--bg-secondary)]/20 transition-[color,background-color,border-color,box-shadow,opacity,transform]">
         <button
           type="button"
           className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 cursor-pointer w-full text-left appearance-none bg-transparent"

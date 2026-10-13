@@ -271,6 +271,7 @@ function CreateTagInline({
         aria-label={t("tags.namePlaceholder", "Tag name")}
         maxLength={50}
         onKeyDown={e => {
+          if (e.nativeEvent.isComposing) return;
           if (e.key === "Enter") handleSubmit();
         }}
         className="w-full px-3 py-2 rounded-lg border border-[var(--text-secondary)]/20 bg-[var(--bg-primary)] text-sm focus:outline-none focus:border-[var(--primary)]"
@@ -479,6 +480,7 @@ function CreateTagRow({
           aria-label={t("tags.namePlaceholder", "Tag name")}
           maxLength={50}
           onKeyDown={e => {
+            if (e.nativeEvent.isComposing) return;
             if (e.key === "Enter") handleSubmit();
           }}
           className="flex-1 px-3 py-2 rounded-lg border border-[var(--text-secondary)]/20 bg-[var(--bg-primary)] text-sm focus:outline-none focus:border-[var(--primary)]"
@@ -593,6 +595,7 @@ function EditTagRow({
         aria-label={t("tags.name", "Name")}
         maxLength={50}
         onKeyDown={e => {
+          if (e.nativeEvent.isComposing) return;
           if (e.key === "Enter") handleSubmit();
         }}
         className="w-full px-3 py-2 rounded-lg border border-[var(--text-secondary)]/20 bg-[var(--bg-primary)] text-sm focus:outline-none focus:border-[var(--primary)]"

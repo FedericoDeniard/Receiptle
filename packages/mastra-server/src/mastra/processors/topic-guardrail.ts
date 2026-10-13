@@ -51,6 +51,13 @@ Respond ONLY with a JSON object:
   "reason": string (the short, polite rejection message in the user's language)
 }`;
 
+function stripCodeFences(raw: string): string {
+  return raw
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/, "");
+}
+
 function getTextFromMessage(msg: MastraDBMessage): string {
   const parts = msg.content?.parts;
   if (!Array.isArray(parts)) return "";
@@ -70,7 +77,7 @@ export class TopicGuardrailProcessor implements Processor {
       apiKey: process.env.OPENROUTER_API_KEY ?? "",
     });
     const modelName =
-      process.env.OPENROUTER_GUARDRAIL_MODEL ?? "google/gemini-2.5-flash-lite";
+      process.env.OPENROUTER_GUARDRAIL_MODEL ?? "deepseek/deepseek-v4.1-flash";
     this.model = openrouter(modelName);
   }
 
@@ -115,7 +122,7 @@ export class TopicGuardrailProcessor implements Processor {
         reason?: string;
       };
       try {
-        parsed = JSON.parse(responseText);
+        parsed = JSON.parse(stripCodeFences(responseText));
       } catch {
         return messages;
       }

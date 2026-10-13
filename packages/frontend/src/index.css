@@ -34,7 +34,7 @@
   }
 
   body {
-    @apply min-h-screen m-0 bg-white;
+    @apply min-h-dvh m-0 bg-white;
   }
 }
 

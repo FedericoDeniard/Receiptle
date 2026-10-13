@@ -272,7 +272,7 @@ export type { AppRole, Capability };
 
 // Internal helper kept for tests; production callers should go through
 // adminService.* so the schema("payments") wrapper isn't duplicated.
-export async function adminRpcRaw<T>(
+async function adminRpcRaw<T>(
   name: string,
   args: Record<string, unknown>,
   client?: DbClient

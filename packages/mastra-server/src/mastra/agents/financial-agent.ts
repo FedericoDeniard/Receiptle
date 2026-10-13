@@ -23,11 +23,9 @@ const openrouter = createOpenRouter({
 
 const FINANCIAL_AGENT_MODEL =
   process.env.OPENROUTER_FINANCIAL_AGENT_MODEL ??
-  "google/gemini-2.5-flash-lite";
+  "deepseek/deepseek-v4.1-flash";
 const THREAD_TITLE_MODEL =
-  process.env.OPENROUTER_THREAD_TITLE_MODEL ?? "google/gemini-2.5-flash-lite";
-const GUARDRAIL_MODEL =
-  process.env.OPENROUTER_GUARDRAIL_MODEL ?? "google/gemini-2.5-flash-lite";
+  process.env.OPENROUTER_THREAD_TITLE_MODEL ?? "deepseek/deepseek-v4.1-flash";
 
 export const financialAgent = new Agent({
   id: "financial-agent",

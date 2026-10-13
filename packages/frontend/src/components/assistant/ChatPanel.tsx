@@ -277,7 +277,9 @@ export function ChatPanel({
   // useEffectEvent gives us a stable callback that always reads the
   // latest `messages` from useChat — no need to mirror it into a ref.
   const messagesRef = useRef(messages);
-  messagesRef.current = messages;
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
   const wrappedSendMessage = useCallback(
     (msg: Parameters<typeof sendMessage>[0]) => {
       sendMessage(msg);

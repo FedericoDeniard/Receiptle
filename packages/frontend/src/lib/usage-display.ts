@@ -36,7 +36,7 @@ export function sortByDisplayOrder<T extends { capability: Capability }>(
 ): T[] {
   const order = new Map<Capability, number>();
   USAGE_DISPLAY_ORDER.forEach((cap, idx) => order.set(cap, idx));
-  return [...rows].sort((a, b) => {
+  return rows.toSorted((a, b) => {
     const ai = order.get(a.capability) ?? Number.MAX_SAFE_INTEGER;
     const bi = order.get(b.capability) ?? Number.MAX_SAFE_INTEGER;
     return ai - bi;
@@ -51,7 +51,7 @@ export function sortByDisplayOrder<T extends { capability: Capability }>(
  * `[usage]` warning so the tooltip stays informative without
  * crashing.
  */
-export function resolveScopeLabel(
+function resolveScopeLabel(
   scopeKind: "role" | "plan" | "default" | "team" | "org",
   scopeValue: string | null,
   t: Translator

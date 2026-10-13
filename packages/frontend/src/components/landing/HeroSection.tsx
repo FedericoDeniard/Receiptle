@@ -196,7 +196,7 @@ function HeroCtaButtons() {
     >
       <Link
         to="/register"
-        className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-[var(--button-primary)] hover:bg-[var(--button-primary-hover)] text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
+        className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-[var(--button-primary)] hover:bg-[var(--button-primary-hover)] text-white rounded-xl font-semibold transition-[color,background-color,border-color,box-shadow,opacity,transform] shadow-lg hover:shadow-xl hover:-translate-y-1"
       >
         {t("landing.hero.getStarted")}
         <ArrowRight size={20} />
@@ -205,7 +205,7 @@ function HeroCtaButtons() {
         to="https://federicodeniard-receiptle.mintlify.app/"
         target="_blank"
         rel="noopener noreferrer"
-        className="w-full sm:w-auto flex items-center justify-center px-8 py-4 bg-[var(--bg-secondary)] hover:bg-zinc-100 text-[var(--text-primary)] border border-[var(--text-secondary)]/20 rounded-xl font-semibold transition-all"
+        className="w-full sm:w-auto flex items-center justify-center px-8 py-4 bg-[var(--bg-secondary)] hover:bg-zinc-100 text-[var(--text-primary)] border border-[var(--text-secondary)]/20 rounded-xl font-semibold transition-[color,background-color,border-color,box-shadow,opacity,transform]"
       >
         {t("landing.hero.readDocs")}
       </Link>
@@ -291,7 +291,7 @@ function TransactionsMockPanel() {
         {MOCK_TRANSACTIONS.map(tx => (
           <div
             key={tx.title}
-            className="relative p-4 rounded-2xl transition-all shadow-sm bg-white border border-[var(--text-secondary)]/10 hover:bg-zinc-50"
+            className="relative p-4 rounded-2xl transition-[color,background-color,border-color,box-shadow,opacity,transform] shadow-sm bg-white border border-[var(--text-secondary)]/10 hover:bg-zinc-50"
           >
             <div className="relative flex items-center gap-4">
               <div className="flex-1 min-w-0">
@@ -347,7 +347,7 @@ function HeroMockup({
       }}
       className="mt-20 relative max-w-5xl mx-auto"
     >
-      <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-transparent to-transparent z-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-t from-[var(--bg-primary)] via-transparent to-transparent z-10 pointer-events-none" />
       <div className="relative rounded-2xl border border-[var(--text-secondary)]/20 bg-[var(--bg-secondary)] shadow-2xl overflow-hidden h-[500px]">
         <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--text-secondary)]/10 bg-white/50 relative z-20">
           <div className="size-3 rounded-full bg-red-400" />

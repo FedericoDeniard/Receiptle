@@ -23,7 +23,7 @@ export function MetricCard({
 
   return (
     <LazyMotion features={domAnimation}>
-      <div className="p-6 rounded-xl border border-[#3d5a80]/15 hover:border-[#3d5a80]/30 transition-all duration-300">
+      <div className="p-6 rounded-xl border border-[#3d5a80]/15 hover:border-[#3d5a80]/30 transition-[color,background-color,border-color,box-shadow,opacity,transform] duration-300">
         <div className="flex items-start justify-between mb-4">
           <div className="p-2 rounded-lg bg-[#3d5a80]/15 text-[#3d5a80]">
             {icon}

@@ -102,10 +102,10 @@ export const paymentsService = {
       }),
     });
 
-    const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(payload?.error || "Failed to create checkout link");
+      throw new Error("Failed to create checkout link");
     }
+    const payload = await response.json();
     return payload as CheckoutLinkResponse;
   },
 
@@ -126,10 +126,10 @@ export const paymentsService = {
       },
     });
 
-    const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(payload?.error || "Failed to cancel subscription");
+      throw new Error("Failed to cancel subscription");
     }
+    const payload = await response.json();
     return payload;
   },
 };

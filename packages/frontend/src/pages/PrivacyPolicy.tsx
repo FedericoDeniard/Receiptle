@@ -56,7 +56,7 @@ export function PrivacyPolicy() {
   const lastUpdatedFormatted = formatLastUpdated(i18n.language, LAST_UPDATED);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col font-sans">
+    <div className="min-h-dvh bg-[var(--bg-primary)] flex flex-col font-sans">
       {/* Header */}
       <header className="border-b border-[var(--text-secondary)]/10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-3">
@@ -77,7 +77,7 @@ export function PrivacyPolicy() {
       </header>
 
       {/* Content */}
-      <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-12 max-w-3xl">
+      <main className="grow container mx-auto px-4 sm:px-6 lg:px-8 py-12 max-w-3xl">
         <h1 className="text-3xl font-semibold text-[var(--text-primary)] mb-2">
           {t("privacy.title")}
         </h1>

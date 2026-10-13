@@ -154,7 +154,7 @@ export const AddTransaction = forwardRef<
           variant="primary"
           size="md"
           icon={<Plus size={24} />}
-          className="size-14 rounded-full shadow-lg hover:scale-105 transition-all duration-200"
+          className="size-14 rounded-full shadow-lg hover:scale-105 transition-[color,background-color,border-color,box-shadow,opacity,transform] duration-200"
           aria-label={t("transactions.addTransaction")}
           disabled={isDisabled}
         />

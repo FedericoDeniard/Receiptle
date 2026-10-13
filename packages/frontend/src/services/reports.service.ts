@@ -107,8 +107,10 @@ class ReportsService {
   }
 
   async getReportById(id: string): Promise<ReportSummary | null> {
-    const summaries = await this.listReports("active");
-    const archived = await this.listReports("archived");
+    const [summaries, archived] = await Promise.all([
+      this.listReports("active"),
+      this.listReports("archived"),
+    ]);
     const all = [...summaries, ...archived];
     return all.find(r => r.id === id) ?? null;
   }

@@ -12,6 +12,7 @@ export function useAppUpdate() {
   // also fires controllerchange, but we don't want to reload in that case).
   const isUpdating = useRef(false);
 
+  // oxlint-disable-next-line react-doctor/effect-needs-cleanup
   useEffect(() => {
     if (
       !("serviceWorker" in navigator) ||
@@ -19,44 +20,27 @@ export function useAppUpdate() {
     )
       return;
 
-    async function init() {
-      try {
-        const reg = await navigator.serviceWorker.register("/sw.js", {
-          scope: "/",
-        });
-
-        if (reg.waiting) {
-          waitingWorker.current = reg.waiting;
-          setUpdateAvailable(true);
-          return;
-        }
-
-        reg.addEventListener("updatefound", () => {
-          const newWorker = reg.installing;
-          if (!newWorker) return;
-
-          newWorker.addEventListener("statechange", () => {
-            if (
-              newWorker.state === "installed" &&
-              navigator.serviceWorker.controller
-            ) {
-              waitingWorker.current = newWorker;
-              setUpdateAvailable(true);
-            }
-          });
-        });
-      } catch (err) {
-        console.error("[sw] Registration failed:", err);
+    let cancelled = false;
+    let reg: ServiceWorkerRegistration | null = null;
+    let newWorker: ServiceWorker | null = null;
+    const onStateChange = () => {
+      if (
+        newWorker &&
+        newWorker.state === "installed" &&
+        navigator.serviceWorker.controller
+      ) {
+        waitingWorker.current = newWorker;
+        setUpdateAvailable(true);
       }
-    }
-
-    init();
-
-    let refreshing = false;
+    };
+    const onUpdateFound = () => {
+      const worker = reg?.installing;
+      if (!worker) return;
+      newWorker = worker;
+      worker.addEventListener("statechange", onStateChange);
+    };
     const onControllerChange = () => {
       if (!isUpdating.current) return;
-      if (refreshing) return;
-      refreshing = true;
       window.location.reload();
     };
     navigator.serviceWorker.addEventListener(
@@ -64,11 +48,32 @@ export function useAppUpdate() {
       onControllerChange
     );
 
+    void (async () => {
+      try {
+        const r = await navigator.serviceWorker.register("/sw.js", {
+          scope: "/",
+        });
+        if (cancelled) return;
+        reg = r;
+        if (r.waiting) {
+          waitingWorker.current = r.waiting;
+          setUpdateAvailable(true);
+          return;
+        }
+        r.addEventListener("updatefound", onUpdateFound);
+      } catch (err) {
+        console.error("[sw] Registration failed:", err);
+      }
+    })();
+
     return () => {
+      cancelled = true;
       navigator.serviceWorker.removeEventListener(
         "controllerchange",
         onControllerChange
       );
+      reg?.removeEventListener("updatefound", onUpdateFound);
+      newWorker?.removeEventListener("statechange", onStateChange);
     };
   }, []);
 

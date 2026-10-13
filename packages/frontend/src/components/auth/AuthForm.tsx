@@ -99,9 +99,9 @@ function MessageBanner({
       }`}
     >
       {message.type === "success" ? (
-        <CheckCircle2 className="size-5 flex-shrink-0 mt-0.5" />
+        <CheckCircle2 className="size-5 shrink-0 mt-0.5" />
       ) : (
-        <AlertCircle className="size-5 flex-shrink-0 mt-0.5" />
+        <AlertCircle className="size-5 shrink-0 mt-0.5" />
       )}
       <p className="text-sm font-medium">{message.text}</p>
     </div>
@@ -246,7 +246,7 @@ function FormErrors({
           key={fieldName}
           className="rounded-lg p-3 flex items-start gap-2 bg-[var(--error)]/10 text-[var(--error)]"
         >
-          <AlertCircle className="size-4 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="size-4 shrink-0 mt-0.5" />
           <p className="text-sm font-medium">{error.message}</p>
         </div>
       ))}

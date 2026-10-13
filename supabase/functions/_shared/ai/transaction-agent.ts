@@ -4,10 +4,8 @@ import {
 } from "./schemas.ts";
 import { shouldProcessEmail } from "./guardrail.ts";
 import { EMAIL_EXTRACTION_SYSTEM } from "../prompts/email-extraction.ts";
-import { generateText, Output } from "npm:ai";
-import { createOpenAI } from "npm:ai";
-import { generateObject } from "npm:ai";
-import { createXai } from "npm:@ai-sdk/xai";
+import { generateText, Output } from "npm:ai@7.0.138";
+import { createXai } from "npm:@ai-sdk/xai@5.0.21";
 import { z } from "npm:zod";
 import { traceOperation } from "../lib/langfuse.ts";
 import type {
@@ -45,9 +43,17 @@ function validateAndFixDate(dateString?: string): string | undefined {
   }
 }
 
-const MODEL = process.env.XAI_MODEL ?? "grok-4.20-non-reasoning-latest";
-const FILE_FALLBACK_MODEL =
-  process.env.XAI_FILE_FALLBACK_MODEL ?? "grok-4.20-reasoning-latest";
+const MODEL = process.env.XAI_MODEL ?? "grok-4.6";
+const FILE_FALLBACK_MODEL = process.env.XAI_FILE_FALLBACK_MODEL ?? "grok-4.6";
+function resolveReasoningEffort(): "low" | "medium" | "high" | "xhigh" {
+  const value = process.env.XAI_REASONING_EFFORT;
+  if (value === "low" || value === "medium" || value === "xhigh") {
+    return value;
+  }
+  return "high";
+}
+
+const REASONING_EFFORT = resolveReasoningEffort();
 const TEMPERATURE = 0.1;
 
 function extractJsonObject(text: string): string | null {
@@ -231,6 +237,7 @@ Keep merchant/description in original language from the document.${userLocale ? 
       },
       body: JSON.stringify({
         model: FILE_FALLBACK_MODEL,
+        reasoning: { effort: REASONING_EFFORT },
         input: [
           {
             role: "user",
@@ -393,6 +400,9 @@ Notice the pattern: the clarification is short and conversational, but the outpu
           output: Output.object({
             schema: TransactionResponseSchema,
           }),
+          providerOptions: {
+            xai: { reasoningEffort: REASONING_EFFORT },
+          },
         };
 
         let output;

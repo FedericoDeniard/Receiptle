@@ -35,17 +35,18 @@ export const seedService = {
       }
     );
 
-    const payload = await response.json().catch(() => ({}));
-
     if (!response.ok) {
+      const errorPayload = await response.json().catch(() => ({}));
       const error = new Error(
-        payload?.error || "Failed to start seed job"
+        errorPayload?.error || "Failed to start seed job"
       ) as Error & {
         code?: string;
       };
-      error.code = payload?.code;
+      error.code = errorPayload?.code;
       throw error;
     }
+
+    const payload = await response.json();
 
     return payload;
   },

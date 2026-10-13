@@ -31,6 +31,7 @@ function useMastraThreadTitleRealtime() {
   const queryClient = useQueryClient();
   const channelId = useId();
 
+  // oxlint-disable-next-line react-doctor/effect-needs-cleanup
   useEffect(() => {
     let channel: Awaited<ReturnType<typeof getSupabase>>["channel"] | null =
       null;

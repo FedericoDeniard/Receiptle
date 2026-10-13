@@ -141,6 +141,7 @@ export function useNotificationsRealtime() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
+  // oxlint-disable-next-line react-doctor/effect-needs-cleanup
   useEffect(() => {
     if (!user?.id) return;
 

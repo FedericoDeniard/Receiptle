@@ -35,13 +35,24 @@ function parseYearMonth(value: string): { year: number; month: number } {
   return { year, month };
 }
 
+const monthFormatters = new Map<string, Intl.DateTimeFormat>();
+
+function getMonthFormatter(locale: string): Intl.DateTimeFormat {
+  let formatter = monthFormatters.get(locale);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(locale, {
+      month: "long",
+      year: "numeric",
+    });
+    monthFormatters.set(locale, formatter);
+  }
+  return formatter;
+}
+
 export function formatMonthLabel(yearMonth: string, locale: string): string {
   const { year, month } = parseYearMonth(yearMonth);
   const date = new Date(year, month - 1, 1);
-  return new Intl.DateTimeFormat(locale, {
-    month: "long",
-    year: "numeric",
-  }).format(date);
+  return getMonthFormatter(locale).format(date);
 }
 
 export function getDateRange(

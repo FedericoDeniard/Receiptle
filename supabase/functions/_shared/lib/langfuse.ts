@@ -103,7 +103,7 @@ export async function traceOperation<T>(
 
     trace.generation({
       name: "ai-completion",
-      model: process.env.XAI_MODEL ?? "grok-4.20-non-reasoning-latest",
+      model: process.env.XAI_MODEL ?? "grok-4.6",
       input: generationInput,
       output: serializedOutput,
       startTime: operationStartTime,

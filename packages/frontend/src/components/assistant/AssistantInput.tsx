@@ -108,6 +108,11 @@ function AssistantInputBody({
             const filesToUpload = await Promise.all(
               promptFiles.map(async f => {
                 const response = await fetch(f.url);
+                if (!response.ok) {
+                  throw new Error(
+                    `Failed to fetch attachment: ${response.status} ${response.statusText}`
+                  );
+                }
                 const blob = await response.blob();
                 return new File([blob], f.filename ?? "file", {
                   type: f.mediaType ?? blob.type,

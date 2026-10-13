@@ -30,7 +30,7 @@ export function HowItWorks() {
   return (
     <section className="py-24 bg-white border-y border-[var(--text-secondary)]/10 relative overflow-hidden">
       {/* Background visual */}
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[var(--bg-secondary)] to-transparent opacity-50" />
+      <div className="absolute top-0 right-0 w-1/2 h-full bg-linear-to-l from-[var(--bg-secondary)] to-transparent opacity-50" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10">
         <LazyMotion features={domAnimation}>
@@ -103,7 +103,7 @@ export function HowItWorks() {
                   </p>
                   <Link
                     to="/register"
-                    className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-[var(--primary)] hover:bg-zinc-100 rounded-xl font-bold transition-all w-full sm:w-auto hover:scale-105"
+                    className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-[var(--primary)] hover:bg-zinc-100 rounded-xl font-bold transition-[color,background-color,border-color,box-shadow,opacity,transform] w-full sm:w-auto hover:scale-105"
                   >
                     {t("landing.howItWorks.cta.button")}
                     <ArrowRight size={20} />

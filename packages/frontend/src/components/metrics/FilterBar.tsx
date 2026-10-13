@@ -40,7 +40,7 @@ export function FilterBar({
           <m.select
             value={selectedCurrency}
             onChange={e => onCurrencyChange(e.target.value)}
-            className="w-full sm:w-auto px-3 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-transparent hover:border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] cursor-pointer transition-all appearance-none h-8 md:h-9"
+            className="w-full sm:w-auto px-3 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-transparent hover:border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] cursor-pointer transition-[color,background-color,border-color,box-shadow,opacity,transform] appearance-none h-8 md:h-9"
             whileFocus={{ scale: 1.01 }}
             whileHover={{ scale: 1.01 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
@@ -99,7 +99,7 @@ export function FilterBar({
               }
             }}
             aria-label={t("metrics.specificMonth")}
-            className="px-2 h-7 md:h-7 rounded-md text-xs md:text-sm font-medium bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-transparent hover:border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] cursor-pointer transition-all appearance-none"
+            className="px-2 h-7 md:h-7 rounded-md text-xs md:text-sm font-medium bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-transparent hover:border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] cursor-pointer transition-[color,background-color,border-color,box-shadow,opacity,transform] appearance-none"
           />
         )}
       </div>

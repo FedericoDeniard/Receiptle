@@ -43,7 +43,7 @@ export function AuthCallback() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-primary)]">
+    <div className="min-h-dvh flex flex-col items-center justify-center bg-[var(--bg-primary)]">
       <div className="flex flex-col items-center justify-center text-center">
         <LoadingSpinner size="lg" />
         <p className="mt-4 text-[var(--text-secondary)]">

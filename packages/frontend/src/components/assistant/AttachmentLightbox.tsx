@@ -26,10 +26,12 @@ export function AttachmentLightbox({
         <DialogOverlay className="bg-black/80" />
         <DialogContent
           showCloseButton={false}
-          className="!fixed !inset-0 !top-0 !left-0 !h-screen !w-screen !max-w-none !translate-x-0 !translate-y-0 gap-0 rounded-none border-0 bg-transparent p-0 shadow-none outline-none data-[state=closed]:zoom-out-100 data-[state=open]:zoom-in-100 sm:!max-w-none"
+          className="!fixed !inset-0 !top-0 !left-0 !h-dvh !w-screen !max-w-none !translate-x-0 !translate-y-0 gap-0 rounded-none border-0 bg-transparent p-0 shadow-none outline-none data-[state=closed]:zoom-out-100 data-[state=open]:zoom-in-100 sm:!max-w-none"
         >
-          <div
-            className="flex h-full w-full cursor-zoom-out items-center justify-center"
+          <button
+            type="button"
+            aria-label="Close lightbox"
+            className="flex h-full w-full cursor-zoom-out items-center justify-center bg-transparent border-0 p-0"
             onClick={() => onOpenChange(false)}
           >
             <img
@@ -39,7 +41,7 @@ export function AttachmentLightbox({
               onClick={event => event.stopPropagation()}
               src={src}
             />
-          </div>
+          </button>
           <DialogClose
             aria-label="Close"
             className="!absolute !top-4 !right-4 flex size-10 cursor-pointer items-center justify-center rounded-full bg-black/60 text-white outline-none ring-offset-background transition-opacity hover:bg-black/80 focus-visible:ring-2 focus-visible:ring-white/40"

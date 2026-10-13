@@ -32,7 +32,7 @@ export function DashboardLayout() {
 
   return (
     <SidebarContext.Provider value={sidebarValue}>
-      <div className="min-h-screen bg-[var(--bg-secondary)] flex flex-col lg:flex-row">
+      <div className="min-h-dvh bg-[var(--bg-secondary)] flex flex-col lg:flex-row">
         {/* Mobile Header */}
         <header className="lg:hidden bg-[var(--bg-primary)] border-b border-[var(--text-secondary)]/20 p-4 sticky top-0 z-30 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -76,7 +76,7 @@ export function DashboardLayout() {
           onClose={() => setIsSidebarOpen(false)}
         />
 
-        <main className="relative flex-1 px-4 py-0 lg:px-8 lg:pt-4 lg:pb-0 lg:ml-64 h-[calc(100dvh-72px)] lg:h-screen lg:min-h-screen w-full overflow-x-hidden overflow-y-auto">
+        <main className="relative flex-1 px-4 py-0 lg:px-8 lg:pt-4 lg:pb-0 lg:ml-64 h-[calc(100dvh-72px)] lg:h-dvh lg:min-h-dvh w-full overflow-x-hidden overflow-y-auto">
           <div className="fixed right-0 top-1/2 z-20 hidden -translate-y-1/2 lg:block">
             <button
               type="button"
@@ -93,7 +93,7 @@ export function DashboardLayout() {
               )}
             </button>
           </div>
-          <div className="mx-auto h-[calc(100dvh-73px)] lg:h-[calc(100vh-16px)] max-w-7xl">
+          <div className="mx-auto h-[calc(100dvh-73px)] lg:h-[calc(100dvh-16px)] max-w-7xl">
             <Outlet />
           </div>
         </main>

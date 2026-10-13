@@ -16,7 +16,7 @@ export function ReportCard({ report }: ReportCardProps) {
     <Link
       to={`/reports/${report.id}`}
       aria-labelledby={`report-${report.id}-title`}
-      className="group flex flex-col gap-4 rounded-2xl border border-[var(--text-secondary)]/20 bg-[var(--bg-primary)] p-5 shadow-sm transition-all hover:shadow-md hover:border-[var(--text-secondary)]/40 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2"
+      className="group flex flex-col gap-4 rounded-2xl border border-[var(--text-secondary)]/20 bg-[var(--bg-primary)] p-5 shadow-sm transition-[color,background-color,border-color,box-shadow,opacity,transform] hover:shadow-md hover:border-[var(--text-secondary)]/40 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2"
     >
       <header className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -77,7 +77,7 @@ export function ReportCard({ report }: ReportCardProps) {
         </span>
         <ArrowRight
           size={14}
-          className="text-[var(--text-secondary)] group-hover:text-[var(--primary)] group-hover:translate-x-0.5 transition-all"
+          className="text-[var(--text-secondary)] group-hover:text-[var(--primary)] group-hover:translate-x-0.5 transition-[color,background-color,border-color,box-shadow,opacity,transform]"
           aria-hidden
         />
       </footer>

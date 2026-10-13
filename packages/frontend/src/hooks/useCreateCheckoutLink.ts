@@ -12,9 +12,11 @@ interface CreateCheckoutLinkInput {
 }
 
 export function useCreateCheckoutLink() {
+  const invalidatePayments = useInvalidatePaymentsQueries();
   return useMutation<CheckoutLinkResponse, Error, CreateCheckoutLinkInput>({
     mutationFn: ({ planId, provider }) =>
       paymentsService.createCheckoutLink(planId, provider),
+    onSuccess: () => invalidatePayments(),
   });
 }
 

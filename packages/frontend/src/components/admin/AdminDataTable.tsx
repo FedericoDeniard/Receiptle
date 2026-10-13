@@ -218,6 +218,18 @@ function RowEl<TRow>({
   return (
     <tr
       onClick={onClick}
+      onKeyDown={
+        onClick
+          ? e => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+      tabIndex={onClick ? 0 : undefined}
+      role={onClick ? "button" : undefined}
       className={
         onClick
           ? "cursor-pointer transition-colors hover:bg-[var(--bg-secondary)]"

@@ -60,7 +60,7 @@ export function isActiveSubscriptionStatus(
  * for users on that status). Intended to be called once at boot from
  * the settings panel or the queryClient.
  */
-export function assertSubscriptionStatusSync(): void {
+function assertSubscriptionStatusSync(): void {
   // `Database["payments"]["Tables"]["subscriptions"]["Row"]["status"]`
   // resolves to `string` in generated types (Postgres text column),
   // so we can't introspect the actual enum at type level. Instead we

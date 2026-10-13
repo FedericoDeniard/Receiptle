@@ -11,7 +11,7 @@
  * fetches fresh data. The 30-day refetch interval that the ticket
  * mentions as "unnecessary" is omitted entirely.
  */
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "./useAuth";
 import { useMySubscription } from "./useMySubscription";
 import { usageService, type UsageRow } from "../services/usage.service";
@@ -63,17 +63,5 @@ export function useUserUsage(): UseUserUsageReturn {
       void query.refetch();
     },
     hasActivePlan,
-  };
-}
-
-/**
- * Public invalidator. Call after any action that might have changed
- * the counter (chat message, document upload, PDF export) so the
- * panel refetches next mount.
- */
-export function useInvalidateUsageQueries() {
-  const queryClient = useQueryClient();
-  return () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.usage.all });
   };
 }

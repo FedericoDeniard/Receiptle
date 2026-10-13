@@ -1,2 +1,20 @@
 #!/bin/sh
 bunx lint-staged
+
+# React Doctor: block the commit if staged files introduce any
+# react-doctor errors or warnings. Runs from packages/frontend so
+# the staged-file scanner finds the project's tsconfig and plugin
+# setup. `--blocking warning` makes warnings fail the commit too
+# (default is errors-only).
+#
+# react-doctor --staged refuses to run if the project config files
+# (package.json, tsconfig.json, doctor.config.ts, ...) differ between
+# the index and the worktree — that would make its scan target a
+# different set of files than what's actually being committed.
+# Re-stage those files first so the scanner sees a consistent view.
+cd packages/frontend
+git add -- package.json tsconfig.json doctor.config.ts bunfig.toml 2>/dev/null
+./node_modules/.bin/react-doctor --staged --blocking warning
+rc=$?
+cd ../..
+exit $rc

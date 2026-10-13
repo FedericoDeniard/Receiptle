@@ -101,7 +101,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               key={link.path}
               to={link.path}
               onClick={onClose}
-              className={`relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ease-in-out group ${
+              className={`relative flex items-center gap-3 px-4 py-3 rounded-lg transition-[color,background-color,border-color,box-shadow,opacity,transform] duration-200 ease-in-out group ${
                 isActive
                   ? "text-white"
                   : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
@@ -147,7 +147,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Desktop Sidebar */}
       <aside
         data-tour="sidebar"
-        className="hidden lg:flex w-64 min-h-screen flex-col fixed left-0 top-0 h-full z-10"
+        className="hidden lg:flex w-64 min-h-dvh flex-col fixed left-0 top-0 h-full z-10"
       >
         {sidebarContent}
       </aside>

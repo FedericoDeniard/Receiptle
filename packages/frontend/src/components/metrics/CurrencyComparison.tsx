@@ -133,7 +133,7 @@ function CurrencyCard({
   getCurrencySymbol: (currency: string) => string;
 }) {
   const { t } = useTranslation();
-  const cardClassName = `bg-[var(--bg-secondary)] p-6 rounded-xl border border-transparent hover:border-[var(--border)] transition-all duration-300 ${onCurrencySelect ? "cursor-pointer hover:shadow-md" : ""}`;
+  const cardClassName = `bg-[var(--bg-secondary)] p-6 rounded-xl border border-transparent hover:border-[var(--border)] transition-[color,background-color,border-color,box-shadow,opacity,transform] duration-300 ${onCurrencySelect ? "cursor-pointer hover:shadow-md" : ""}`;
   const content = (
     <>
       <div className="flex items-center justify-between mb-4">
@@ -260,7 +260,7 @@ function SummaryInsights({
         {t("metrics.currencyInsights")}
       </h3>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="text-center p-4 bg-[var(--bg-primary)] rounded-xl border border-transparent hover:border-[var(--border)] transition-all">
+        <div className="text-center p-4 bg-[var(--bg-primary)] rounded-xl border border-transparent hover:border-[var(--border)] transition-[color,background-color,border-color,box-shadow,opacity,transform]">
           <p className="text-3xl font-bold text-[var(--text-primary)] tracking-tight">
             {currencyMetrics.length}
           </p>
@@ -268,7 +268,7 @@ function SummaryInsights({
             {t("metrics.activeCurrencies")}
           </p>
         </div>
-        <div className="text-center p-4 bg-[var(--bg-primary)] rounded-xl border border-transparent hover:border-[var(--border)] transition-all">
+        <div className="text-center p-4 bg-[var(--bg-primary)] rounded-xl border border-transparent hover:border-[var(--border)] transition-[color,background-color,border-color,box-shadow,opacity,transform]">
           <p className="text-3xl font-bold text-[var(--text-primary)] tracking-tight">
             {currencyMetrics.reduce((sum, m) => sum + m.transactionCount, 0)}
           </p>
@@ -276,7 +276,7 @@ function SummaryInsights({
             {t("metrics.totalTransactions")}
           </p>
         </div>
-        <div className="text-center p-4 bg-[var(--bg-primary)] rounded-xl border border-transparent hover:border-[var(--border)] transition-all">
+        <div className="text-center p-4 bg-[var(--bg-primary)] rounded-xl border border-transparent hover:border-[var(--border)] transition-[color,background-color,border-color,box-shadow,opacity,transform]">
           <p className="text-3xl font-bold text-[var(--text-primary)] tracking-tight">
             {currencyMetrics.find(m => m.netBalance > 0)?.currency || "-"}
           </p>
@@ -306,7 +306,7 @@ function CategoryBreakdown({
         {currencyMetrics.map(metrics => (
           <div
             key={metrics.currency}
-            className="bg-[var(--bg-primary)] p-5 rounded-xl border border-transparent hover:border-[var(--border)] transition-all"
+            className="bg-[var(--bg-primary)] p-5 rounded-xl border border-transparent hover:border-[var(--border)] transition-[color,background-color,border-color,box-shadow,opacity,transform]"
           >
             <div className="flex items-center justify-between mb-4">
               <span className="font-bold text-[var(--text-primary)] text-lg">
@@ -365,7 +365,7 @@ function BehavioralInsights({
         {t("metrics.behavioralInsights")}
       </h3>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="p-5 bg-[var(--bg-primary)] rounded-xl border border-transparent hover:border-[var(--border)] transition-all">
+        <div className="p-5 bg-[var(--bg-primary)] rounded-xl border border-transparent hover:border-[var(--border)] transition-[color,background-color,border-color,box-shadow,opacity,transform]">
           <p className="text-sm font-medium text-[var(--text-secondary)] mb-2">
             {t("metrics.bestSaver")}
           </p>
@@ -379,7 +379,7 @@ function BehavioralInsights({
           </div>
         </div>
 
-        <div className="p-5 bg-[var(--bg-primary)] rounded-xl border border-transparent hover:border-[var(--border)] transition-all">
+        <div className="p-5 bg-[var(--bg-primary)] rounded-xl border border-transparent hover:border-[var(--border)] transition-[color,background-color,border-color,box-shadow,opacity,transform]">
           <p className="text-sm font-medium text-[var(--text-secondary)] mb-2">
             {t("metrics.highestSpender")}
           </p>
@@ -395,7 +395,7 @@ function BehavioralInsights({
           </div>
         </div>
 
-        <div className="p-5 bg-[var(--bg-primary)] rounded-xl border border-transparent hover:border-[var(--border)] transition-all">
+        <div className="p-5 bg-[var(--bg-primary)] rounded-xl border border-transparent hover:border-[var(--border)] transition-[color,background-color,border-color,box-shadow,opacity,transform]">
           <p className="text-sm font-medium text-[var(--text-secondary)] mb-2">
             {t("metrics.mostActive")}
           </p>
@@ -409,7 +409,7 @@ function BehavioralInsights({
           </div>
         </div>
 
-        <div className="p-5 bg-[var(--bg-primary)] rounded-xl border border-transparent hover:border-[var(--border)] transition-all">
+        <div className="p-5 bg-[var(--bg-primary)] rounded-xl border border-transparent hover:border-[var(--border)] transition-[color,background-color,border-color,box-shadow,opacity,transform]">
           <p className="text-sm font-medium text-[var(--text-secondary)] mb-2">
             {t("metrics.largestTransactions")}
           </p>

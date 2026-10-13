@@ -1,9 +1,10 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   uploadChatAttachments,
   deleteChatAttachments,
   type ChatAttachment,
 } from "../services/chat-attachments.service";
+import { queryKeys } from "../lib/query-client";
 
 interface UploadVariables {
   threadId: string;
@@ -18,8 +19,12 @@ interface UploadVariables {
  * blob URLs in the message stream for the persisted attachments.
  */
 export function useUploadChatAttachments() {
+  const queryClient = useQueryClient();
   return useMutation<ChatAttachment[], Error, UploadVariables>({
     mutationFn: ({ threadId, files }) => uploadChatAttachments(threadId, files),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.chatThreads.all });
+    },
   });
 }
 
@@ -29,7 +34,11 @@ export function useUploadChatAttachments() {
  * the request — e.g. text-only model receiving an image.
  */
 export function useDeleteChatAttachments() {
+  const queryClient = useQueryClient();
   return useMutation<void, Error, ChatAttachment[]>({
     mutationFn: attachments => deleteChatAttachments(attachments),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.chatThreads.all });
+    },
   });
 }

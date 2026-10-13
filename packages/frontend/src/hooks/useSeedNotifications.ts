@@ -20,6 +20,7 @@ interface Seed {
 export function useSeedNotifications(userId: string | undefined) {
   const { t } = useTranslation();
 
+  // oxlint-disable-next-line react-doctor/effect-needs-cleanup
   useEffect(() => {
     if (!userId) return;
 

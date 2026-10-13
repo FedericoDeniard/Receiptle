@@ -12,7 +12,7 @@ export function LandingPage() {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col font-sans selection:bg-[var(--accent)] selection:text-[var(--primary)]">
+    <div className="min-h-dvh bg-[var(--bg-primary)] flex flex-col font-sans selection:bg-[var(--accent)] selection:text-[var(--primary)]">
       {/* Header/Nav */}
       <header className="fixed top-0 w-full bg-[var(--bg-primary)]/80 backdrop-blur-md border-b border-[var(--text-secondary)]/10 z-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -46,7 +46,7 @@ export function LandingPage() {
         </div>
       </header>
 
-      <main className="flex-grow pt-16">
+      <main className="grow pt-16">
         <HeroSection />
         <FeatureGrid />
         <HowItWorks />

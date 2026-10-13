@@ -93,6 +93,7 @@ export function ResetPassword() {
         type: "error",
         text: errorMessage,
       });
+    } finally {
       setLoading(false);
     }
   };

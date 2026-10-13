@@ -27,6 +27,7 @@ export function useTransactionsRealtime() {
     });
   }, []);
 
+  // oxlint-disable-next-line react-doctor/effect-needs-cleanup
   useEffect(() => {
     let subscription: RealtimeChannel | null = null;
 

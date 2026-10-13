@@ -95,9 +95,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading…
-      </div>
+      <div className="min-h-dvh flex items-center justify-center">Loading…</div>
     );
   }
 
@@ -113,9 +111,7 @@ function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading…
-      </div>
+      <div className="min-h-dvh flex items-center justify-center">Loading…</div>
     );
   }
 
@@ -139,9 +135,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading…
-      </div>
+      <div className="min-h-dvh flex items-center justify-center">Loading…</div>
     );
   }
 

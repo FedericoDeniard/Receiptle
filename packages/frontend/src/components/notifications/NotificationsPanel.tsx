@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { LazyMotion, m, domAnimation, AnimatePresence } from "framer-motion";
 import {
   AlertCircle,
@@ -105,7 +105,7 @@ function NotificationRow({
 
   return (
     <div
-      className={`group relative flex items-start gap-3 rounded-xl border p-4 transition-all duration-200 hover:shadow-md ${
+      className={`group relative flex items-start gap-3 rounded-xl border p-4 transition-[color,background-color,border-color,box-shadow,opacity,transform] duration-200 hover:shadow-md ${
         unread
           ? "border-[var(--button-primary)]/30 bg-[var(--bg-secondary)]"
           : "border-[var(--text-secondary)]/20 bg-[var(--bg-primary)] hover:border-[var(--text-secondary)]/40"
@@ -125,7 +125,7 @@ function NotificationRow({
             type="checkbox"
             checked={isSelected}
             onChange={event => onSelect(event.target.checked)}
-            className="peer size-5 cursor-pointer appearance-none rounded border border-[var(--text-secondary)]/30 checked:border-[var(--button-primary)] checked:bg-[var(--button-primary)] hover:border-[var(--button-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--button-primary)]/30 focus:ring-offset-1 transition-all"
+            className="peer size-5 cursor-pointer appearance-none rounded border border-[var(--text-secondary)]/30 checked:border-[var(--button-primary)] checked:bg-[var(--button-primary)] hover:border-[var(--button-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--button-primary)]/30 focus:ring-offset-1 transition-[color,background-color,border-color,box-shadow,opacity,transform]"
             aria-label={t("notifications.selectItem")}
           />
           <CheckCheck
@@ -214,11 +214,9 @@ export function NotificationsPanel({
   const navigate = useNavigate();
   const [filter, setFilter] = useState<PanelFilter>("all");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
-  // Limpiar selección cuando se cierra el panel
-  const prevIsOpenRef = useRef(isOpen);
-  if (isOpen !== prevIsOpenRef.current) {
-    prevIsOpenRef.current = isOpen;
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (!isOpen) {
       setSelectedIds([]);
     }
@@ -295,7 +293,7 @@ export function NotificationsPanel({
               animate={{ x: 0, boxShadow: "-10px 0 40px rgba(0,0,0,0.1)" }}
               exit={{ x: "100%", boxShadow: "0 0 0 rgba(0,0,0,0)" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 z-50 h-screen w-full max-w-md bg-[var(--bg-primary)] border-l border-[var(--text-secondary)]/20 overflow-hidden"
+              className="fixed right-0 top-0 z-50 h-dvh w-full max-w-md bg-[var(--bg-primary)] border-l border-[var(--text-secondary)]/20 overflow-hidden"
             >
               <div className="flex h-full flex-col bg-[var(--bg-primary)]">
                 {/* Header */}
@@ -335,7 +333,7 @@ export function NotificationsPanel({
                             type="button"
                             aria-label={t("notifications.selectAll")}
                             onClick={toggleSelectAll}
-                            className="group relative flex size-5 items-center justify-center rounded border-2 border-[var(--button-primary)] bg-[var(--button-primary)] transition-all"
+                            className="group relative flex size-5 items-center justify-center rounded border-2 border-[var(--button-primary)] bg-[var(--button-primary)] transition-[color,background-color,border-color,box-shadow,opacity,transform]"
                           >
                             <CheckCheck
                               size={14}
@@ -428,7 +426,7 @@ export function NotificationsPanel({
                               type="checkbox"
                               checked={false}
                               onChange={toggleSelectAll}
-                              className="size-5 cursor-pointer appearance-none rounded border border-[var(--text-secondary)]/30 hover:border-[var(--button-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--button-primary)]/30 focus:ring-offset-1 transition-all"
+                              className="size-5 cursor-pointer appearance-none rounded border border-[var(--text-secondary)]/30 hover:border-[var(--button-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--button-primary)]/30 focus:ring-offset-1 transition-[color,background-color,border-color,box-shadow,opacity,transform]"
                               aria-label={t("notifications.actions.selectAll")}
                             />
                           </div>

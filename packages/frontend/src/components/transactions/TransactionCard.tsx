@@ -42,20 +42,24 @@ export function TransactionCard({
   const [gmailConnections, setGmailConnections] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
     const checkConnections = async () => {
       if (user?.id) {
         const status = await gmailService.getConnectionStatus(user.id);
-        setGmailConnections(status.total);
+        if (!cancelled) setGmailConnections(status.total);
       }
     };
     checkConnections();
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
 
   return (
     <LazyMotion features={domAnimation}>
       <m.div
         onClick={onClick}
-        className={`relative p-4 rounded-2xl transition-all cursor-pointer shadow-sm hover:shadow-md ${
+        className={`relative p-4 rounded-2xl transition-[color,background-color,border-color,box-shadow,opacity,transform] cursor-pointer shadow-sm hover:shadow-md ${
           isSelected ? "text-white" : "bg-white hover:bg-zinc-50"
         }`}
         whileHover={{ scale: 1.02 }}

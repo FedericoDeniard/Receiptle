@@ -21,9 +21,11 @@ export function useActiveSection(ids: string[]) {
     if (ids.length === 0) return;
     if (locked) return;
 
-    const elements = ids
-      .map(id => document.getElementById(id))
-      .filter((el): el is HTMLElement => el !== null);
+    const elements: HTMLElement[] = [];
+    for (const id of ids) {
+      const el = document.getElementById(id);
+      if (el) elements.push(el);
+    }
     if (elements.length === 0) return;
 
     const observer = new IntersectionObserver(
@@ -42,7 +44,7 @@ export function useActiveSection(ids: string[]) {
       }
     );
 
-    elements.forEach(el => observer.observe(el));
+    for (const el of elements) observer.observe(el);
     return () => observer.disconnect();
   }, [ids, locked]);
 

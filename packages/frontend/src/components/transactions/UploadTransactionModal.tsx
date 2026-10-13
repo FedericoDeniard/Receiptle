@@ -254,7 +254,7 @@ function StatusBanner({
   if (pasteSuccessMessage && uploadState !== "error") {
     return (
       <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-        <CheckCircle className="size-5 text-blue-500 flex-shrink-0" />
+        <CheckCircle className="size-5 text-blue-500 shrink-0" />
         <p className="text-sm text-blue-700">{pasteSuccessMessage}</p>
       </div>
     );
@@ -263,7 +263,7 @@ function StatusBanner({
   if (uploadState === "error" && errorMessage) {
     return (
       <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-        <AlertCircle className="size-5 text-red-500 flex-shrink-0" />
+        <AlertCircle className="size-5 text-red-500 shrink-0" />
         <p className="text-sm text-red-700">{errorMessage}</p>
       </div>
     );
@@ -272,7 +272,7 @@ function StatusBanner({
   if (uploadState === "success") {
     return (
       <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-        <CheckCircle className="size-5 text-green-500 flex-shrink-0" />
+        <CheckCircle className="size-5 text-green-500 shrink-0" />
         <p className="text-sm text-green-700">
           {t("upload.success", "Document processed successfully!")}
         </p>
@@ -283,7 +283,7 @@ function StatusBanner({
   if (isProcessing) {
     return (
       <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-        <Loader className="size-5 text-blue-500 flex-shrink-0 animate-spin" />
+        <Loader className="size-5 text-blue-500 shrink-0 animate-spin" />
         <p className="text-sm text-blue-700">
           {uploadState === "uploading"
             ? t("upload.uploading", "Uploading document...")

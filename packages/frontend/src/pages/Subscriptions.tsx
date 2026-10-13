@@ -166,7 +166,8 @@ export function Subscriptions() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] flex-col gap-4 animate-in fade-in duration-500">
+    // oxlint-disable-next-line react-doctor/no-transition-all
+    <div className="flex h-[calc(100dvh-5rem)] flex-col gap-4 animate-in fade-in duration-500">
       {/* Header — renders immediately (title, filters, sort, view mode) */}
       <div data-tour="subscriptions-header">
         <SubscriptionsHeader
@@ -182,7 +183,6 @@ export function Subscriptions() {
           onClearFilters={clearFilters}
         />
       </div>
-
       {/* List — suspends while subscription candidates load */}
       <div className="min-h-0 flex-1 overflow-y-auto pr-1">
         <Suspense fallback={<SuspenseFallback rows={5} />}>

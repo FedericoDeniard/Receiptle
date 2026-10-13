@@ -3,8 +3,7 @@
     "@supabase/functions-js": "jsr:@supabase/functions-js@^2.4.5",
     "@supabase/supabase-js": "jsr:@supabase/supabase-js@^2.45.4",
     "googleapis": "npm:googleapis@^173.0.0",
-    "tesseract.js": "npm:tesseract.js@^7.0.0",
-    "langfuse": "npm:langfuse@^3.0.0"
+    "tesseract.js": "npm:tesseract.js@^7.0.0"
   },
   "compilerOptions": {
     "allowJs": true,

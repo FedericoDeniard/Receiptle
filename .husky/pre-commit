@@ -1,4 +1,10 @@
 #!/bin/sh
+# Git exports GIT_DIR to hooks but not GIT_WORK_TREE; with GIT_DIR set,
+# git treats the cwd as the worktree top, which breaks path resolution
+# for any git command that runs after a `cd` — both ours below and the
+# git calls react-doctor makes internally. Pin the real worktree first.
+export GIT_WORK_TREE="$(git rev-parse --show-toplevel)"
+
 bunx lint-staged
 
 # React Doctor: block the commit if staged files introduce any
@@ -12,8 +18,14 @@ bunx lint-staged
 # the index and the worktree — that would make its scan target a
 # different set of files than what's actually being committed.
 # Re-stage those files first so the scanner sees a consistent view.
+#
+# The `git add` must run from the worktree root: git exports GIT_DIR
+# to hooks without GIT_WORK_TREE, so within a hook the cwd doubles as
+# the worktree top. Running it after `cd packages/frontend` recorded
+# the frontend config files under root-relative paths in the index
+# (and broke the react-doctor scan it was meant to fix).
+git add -- packages/frontend/package.json packages/frontend/tsconfig.json packages/frontend/doctor.config.ts packages/frontend/bunfig.toml 2>/dev/null
 cd packages/frontend
-git add -- package.json tsconfig.json doctor.config.ts bunfig.toml 2>/dev/null
 ./node_modules/.bin/react-doctor --staged --blocking warning
 rc=$?
 cd ../..

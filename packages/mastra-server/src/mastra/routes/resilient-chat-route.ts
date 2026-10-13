@@ -3,6 +3,7 @@ import { handleChatStream } from "@mastra/ai-sdk";
 import { RequestContext } from "@mastra/core/request-context";
 import { randomUUID } from "node:crypto";
 import { requireCapability } from "../../lib/capabilities";
+import { withSseHeartbeats } from "../../lib/sse-heartbeat";
 import { mastra } from "../index";
 
 /**
@@ -283,8 +284,10 @@ export const chatHandler = async (c: Context) => {
     throw err;
   });
 
-  const sseStream = (uiMessageStream as ReadableStream<unknown>).pipeThrough(
-    new JsonToSseTransformStream()
+  const sseStream = withSseHeartbeats(
+    (uiMessageStream as ReadableStream<unknown>).pipeThrough(
+      new JsonToSseTransformStream()
+    )
   );
 
   return new Response(sseStream.pipeThrough(new TextEncoderStream()), {

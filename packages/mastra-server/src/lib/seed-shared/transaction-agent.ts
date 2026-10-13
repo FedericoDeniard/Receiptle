@@ -3,8 +3,6 @@ import { TransactionResponseSchema, type TransactionResponse } from "./schemas";
 import { shouldProcessEmail } from "./guardrail";
 import { EMAIL_EXTRACTION_SYSTEM } from "./prompts/email-extraction";
 import { generateText, Output } from "ai";
-import { createOpenAI } from "ai";
-import { generateObject } from "ai";
 import { createXai } from "@ai-sdk/xai";
 import { z } from "zod";
 import { traceOperation } from "./langfuse";
@@ -43,9 +41,17 @@ function validateAndFixDate(dateString?: string): string | undefined {
   }
 }
 
-const MODEL = process.env.XAI_MODEL ?? "grok-4.20-non-reasoning-latest";
-const FILE_FALLBACK_MODEL =
-  process.env.XAI_FILE_FALLBACK_MODEL ?? "grok-4.20-reasoning-latest";
+const MODEL = process.env.XAI_MODEL ?? "grok-4.6";
+const FILE_FALLBACK_MODEL = process.env.XAI_FILE_FALLBACK_MODEL ?? "grok-4.6";
+function resolveReasoningEffort(): "low" | "medium" | "high" | "xhigh" {
+  const value = process.env.XAI_REASONING_EFFORT;
+  if (value === "low" || value === "medium" || value === "xhigh") {
+    return value;
+  }
+  return "high";
+}
+
+const REASONING_EFFORT = resolveReasoningEffort();
 const TEMPERATURE = 0.1;
 
 function extractJsonObject(text: string): string | null {
@@ -229,6 +235,7 @@ Keep merchant/description in original language from the document.${userLocale ? 
       },
       body: JSON.stringify({
         model: FILE_FALLBACK_MODEL,
+        reasoning: { effort: REASONING_EFFORT },
         input: [
           {
             role: "user",
@@ -391,6 +398,9 @@ Notice the pattern: the clarification is short and conversational, but the outpu
           output: Output.object({
             schema: TransactionResponseSchema,
           }),
+          providerOptions: {
+            xai: { reasoningEffort: REASONING_EFFORT },
+          },
         };
 
         let output;

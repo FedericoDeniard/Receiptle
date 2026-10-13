@@ -86,7 +86,7 @@ Two test surfaces; the rest of the repo has no unit tests.
    ```bash
    bun run test:grok:transaction-agent
    # Internally: cd supabase && deno test --no-check --env-file=functions/.env \
-   #   --allow-env --allow-net functions/_shared/ai/transaction-agent.integration.test.ts
+   #   --allow-env --allow-sys=hostname --allow-net functions/_shared/ai/transaction-agent.integration.test.ts
    ```
 
    `unset OPENROUTER_API_KEY` is intentional — Grok-only path. Requires `XAI_API_KEY` in `supabase/functions/.env`.

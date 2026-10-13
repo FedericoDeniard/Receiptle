@@ -1,7 +1,13 @@
-// @ts-nocheck
-import { Langfuse } from "langfuse";
+import { LangfuseSpanProcessor } from "@langfuse/otel";
+import {
+  propagateAttributes,
+  startActiveObservation,
+  startObservation,
+} from "@langfuse/tracing";
+import { NodeSDK } from "@opentelemetry/sdk-node";
 
-let client: Langfuse | null = null;
+let processor: LangfuseSpanProcessor | null = null;
+let sdk: NodeSDK | null = null;
 let envLogged = false;
 
 function logLangfuseEnvOnce() {
@@ -23,127 +29,162 @@ function logLangfuseEnvOnce() {
   }
 }
 
-function getClient(): Langfuse {
-  if (!client) {
-    client = new Langfuse({
+function getProcessor(): LangfuseSpanProcessor {
+  if (!processor) {
+    const baseUrl = (
+      process.env.LANGFUSE_BASE_URL ?? "https://cloud.langfuse.com"
+    ).replace(/\/+$/, "");
+
+    processor = new LangfuseSpanProcessor({
       publicKey: process.env.LANGFUSE_PUBLIC_KEY ?? "",
       secretKey: process.env.LANGFUSE_SECRET_KEY ?? "",
-      baseUrl: process.env.LANGFUSE_BASE_URL ?? "https://cloud.langfuse.com",
+      baseUrl,
       flushAt: 15,
-      flushInterval: 3000,
+      // v5 takes seconds; v3's flushInterval was milliseconds (3000 ms).
+      flushInterval: 3,
     });
+
+    sdk = new NodeSDK({ spanProcessors: [processor] });
+    sdk.start();
     logLangfuseEnvOnce();
   }
-  return client;
+  return processor;
+}
+
+// For trace-level input, omit the messages array to keep it concise (just metadata).
+function buildTraceInput(input: unknown): string | undefined {
+  if (!input) return undefined;
+  if (typeof input !== "object") return String(input);
+
+  const { messages: _messages, ...meta } = input as { messages?: unknown };
+  const hasMeta = Object.keys(meta).length > 0;
+  return hasMeta ? JSON.stringify(meta) : JSON.stringify(input);
+}
+
+// If input has a messages array, pass it directly so Langfuse renders the
+// chat view with system/user roles. Otherwise fall back to a plain string.
+function buildGenerationInput(input: unknown): unknown {
+  const messages = (input as { messages?: unknown } | undefined)?.messages;
+  if (messages) return messages;
+  if (!input) return undefined;
+  return typeof input === "object" ? JSON.stringify(input) : String(input);
+}
+
+function buildUsageDetails(
+  result: unknown
+): { input: number; output: number; total: number } | undefined {
+  if (!result || typeof result !== "object" || !("usage" in result)) {
+    return undefined;
+  }
+
+  const usage = (result as { usage?: unknown }).usage;
+  if (!usage || typeof usage !== "object") return undefined;
+
+  const tokens = usage as {
+    inputTokens?: number;
+    outputTokens?: number;
+    totalTokens?: number;
+  };
+  const inputTokens = tokens.inputTokens || 0;
+  const outputTokens = tokens.outputTokens || 0;
+
+  return {
+    input: inputTokens,
+    output: outputTokens,
+    total: tokens.totalTokens || inputTokens + outputTokens,
+  };
+}
+
+type EdgeRuntimeLike = {
+  waitUntil?: (promise: Promise<unknown>) => void;
+};
+
+function getEdgeRuntime(): EdgeRuntimeLike | undefined {
+  return (globalThis as { EdgeRuntime?: EdgeRuntimeLike }).EdgeRuntime;
 }
 
 // Enhanced trace wrapper with generation tracking for token/cost
 export async function traceOperation<T>(
   operationName: string,
   operation: () => Promise<T>,
-  input?: any
+  input?: unknown
 ): Promise<T> {
-  const langfuse = getClient();
+  getProcessor();
   const operationStartTime = new Date();
 
-  // For trace-level input, omit the messages array to keep it concise (just metadata).
-  const traceInput = input
-    ? (() => {
-        const { messages: _messages, ...meta } = input as any;
-        const hasMeta = Object.keys(meta).length > 0;
-        return hasMeta
-          ? JSON.stringify(meta)
-          : typeof input === "object"
-            ? JSON.stringify(input)
-            : String(input);
-      })()
-    : undefined;
+  const traceInput = buildTraceInput(input);
+  const generationInput = buildGenerationInput(input);
 
-  const trace = langfuse.trace({
-    name: operationName,
-    input: traceInput,
-  });
+  return await propagateAttributes({ traceName: operationName }, () =>
+    startActiveObservation(operationName, async root => {
+      root.update({ input: traceInput });
 
-  try {
-    const result = await operation();
-    const operationEndTime = new Date();
-    const serializedOutput =
-      typeof result === "object" ? JSON.stringify(result) : String(result);
+      try {
+        const result = await operation();
+        const serializedOutput =
+          typeof result === "object" ? JSON.stringify(result) : String(result);
+        const usageDetails = buildUsageDetails(result);
 
-    // Always persist output, even when usage is missing/null.
-    trace.update({
-      output: serializedOutput,
-    });
+        const generation = startObservation(
+          "ai-completion",
+          {
+            model: process.env.XAI_MODEL ?? "grok-4.6",
+            input: generationInput,
+            output: serializedOutput,
+            ...(usageDetails ? { usageDetails } : {}),
+          },
+          { asType: "generation", startTime: operationStartTime }
+        );
+        generation.end();
 
-    // If input has a messages array, pass it directly so Langfuse renders the
-    // chat view with system/user roles. Otherwise fall back to a plain string.
-    const generationInput = (input as any)?.messages
-      ? (input as any).messages
-      : input
-        ? typeof input === "object"
-          ? JSON.stringify(input)
-          : String(input)
-        : undefined;
+        // Always persist output, even when usage is missing/null.
+        root.update({ output: serializedOutput });
 
-    // Check if result contains AI usage information (from AI SDK)
-    const usage =
-      result && typeof result === "object" && "usage" in result
-        ? (result as any).usage
-        : null;
+        if (usageDetails) {
+          console.log("[Langfuse] Generation with usage tracked", {
+            inputTokens: usageDetails.input,
+            outputTokens: usageDetails.output,
+            totalTokens: usageDetails.total,
+          });
+        }
 
-    const usagePayload =
-      usage && typeof usage === "object"
-        ? {
-            input: usage.inputTokens || 0,
-            output: usage.outputTokens || 0,
-            total:
-              usage.totalTokens ||
-              (usage.inputTokens || 0) + (usage.outputTokens || 0),
-          }
-        : undefined;
-
-    trace.generation({
-      name: "ai-completion",
-      model: process.env.XAI_MODEL ?? "grok-4.6",
-      input: generationInput,
-      output: serializedOutput,
-      startTime: operationStartTime,
-      endTime: operationEndTime,
-      ...(usagePayload ? { usage: usagePayload } : {}),
-    });
-
-    if (usagePayload) {
-      console.log("[Langfuse] Generation with usage tracked", {
-        inputTokens: usage.inputTokens,
-        outputTokens: usage.outputTokens,
-        totalTokens: usage.totalTokens,
-      });
-    }
-
-    return result;
-  } catch (error) {
-    trace.update({
-      output: `Error: ${error instanceof Error ? error.message : String(error)}`,
-    });
-    throw error;
-  }
+        return result;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        root.update({
+          output: `Error: ${message}`,
+          level: "ERROR",
+          statusMessage: message,
+        });
+        throw error;
+      }
+    })
+  );
 }
 
 // Optimized flush for serverless using EdgeRuntime.waitUntil
 export async function flushLangfuse(): Promise<void> {
-  if (client) {
-    try {
-      // Use EdgeRuntime.waitUntil for non-blocking async sending
-      if (typeof EdgeRuntime !== "undefined" && EdgeRuntime.waitUntil) {
-        EdgeRuntime.waitUntil(client.shutdownAsync());
-        console.log("[Langfuse] Flush scheduled with EdgeRuntime.waitUntil");
-      } else {
-        // Fallback for local development
-        await client.shutdownAsync();
-        console.log("[Langfuse] Flush completed (fallback)");
-      }
-    } catch (error) {
-      console.error("[Langfuse] Flush error", error);
+  const current = processor;
+  if (!current) return;
+
+  const flush = () => current.forceFlush();
+
+  try {
+    // Use EdgeRuntime.waitUntil for non-blocking async sending
+    const edgeRuntime = getEdgeRuntime();
+    if (edgeRuntime?.waitUntil) {
+      edgeRuntime.waitUntil(
+        flush().catch((error: unknown) =>
+          console.error("[Langfuse] Flush error", error)
+        )
+      );
+      console.log("[Langfuse] Flush scheduled with EdgeRuntime.waitUntil");
+    } else {
+      // Fallback for long-running processes
+      await flush();
+      console.log("[Langfuse] Flush completed (fallback)");
     }
+  } catch (error) {
+    console.error("[Langfuse] Flush error", error);
   }
 }

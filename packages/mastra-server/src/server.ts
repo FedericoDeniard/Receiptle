@@ -41,5 +41,11 @@ console.log(`[server] Listening on http://localhost:${port}`);
 
 export default {
   port,
+  // Bun.serve closes connections that go 10s without bytes in either
+  // direction — including mid-stream. Chat responses can be quiet
+  // longer than that before the first byte lands (auth, guardrail,
+  // first provider token), so raise the ceiling. The SSE heartbeat in
+  // resilient-chat-route.ts keeps mid-stream gaps short on its own.
+  idleTimeout: 255,
   fetch: app.fetch,
 };

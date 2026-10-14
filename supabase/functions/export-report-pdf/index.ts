@@ -165,7 +165,6 @@ Deno.serve(async req => {
     const auth = await requireUserAuth(req, corsHeaders);
     if (auth instanceof Response) return auth;
     const { user, role } = auth;
-    void user;
 
     // 2. capability gate
     const cap = await requireCapability(

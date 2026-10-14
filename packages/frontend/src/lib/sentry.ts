@@ -4,7 +4,7 @@ import {
   type EdgeFunctionErrorType,
 } from "../utils/edge-function-errors";
 
-export type SentrySource =
+type SentrySource =
   | "uncaught"
   | "error-boundary"
   | "query"

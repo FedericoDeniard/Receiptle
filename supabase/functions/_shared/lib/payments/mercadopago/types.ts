@@ -20,10 +20,6 @@ export const preapprovalWebhookSchema = z.object({
   }),
 });
 
-export type PreapprovalWebhookPayload = z.infer<
-  typeof preapprovalWebhookSchema
->;
-
 // authorized_payment events arrive on the subscription_authorized_payment topic.
 // `data.id` is the authorized_payment id (not the preapproval id). resolving
 // the underlying subscription requires a follow-up GET to /authorized_payments/{id}.
@@ -39,10 +35,6 @@ export const authorizedPaymentWebhookSchema = z.object({
     id: z.union([z.string(), z.number()]),
   }),
 });
-
-export type AuthorizedPaymentWebhookPayload = z.infer<
-  typeof authorizedPaymentWebhookSchema
->;
 
 // ─── /preapproval api response ───────────────────────────────────────────────
 
@@ -69,8 +61,6 @@ export const preapprovalResponseSchema = z.object({
   // plan_provider_variants table.
   preapproval_plan_id: z.string().optional().nullable(),
 });
-
-export type PreapprovalResponse = z.infer<typeof preapprovalResponseSchema>;
 
 // ─── /authorized_payments/{id} response ──────────────────────────────────────
 
@@ -103,7 +93,3 @@ export const updatePreapprovalPlanResponseSchema = z.object({
   date_created: z.string().optional(),
   last_modified: z.string().optional(),
 });
-
-export type UpdatePreapprovalPlanResponse = z.infer<
-  typeof updatePreapprovalPlanResponseSchema
->;

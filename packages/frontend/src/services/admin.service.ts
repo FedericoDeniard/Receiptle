@@ -14,11 +14,9 @@
  * mutation success; read queries refetch via TanStack Query's normal
  * lifecycle.
  */
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../types/database.types";
 import { getSupabase } from "../lib/supabase";
 
-type DbClient = SupabaseClient<Database>;
 type Capability = Database["payments"]["Enums"]["capability"];
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -269,21 +267,3 @@ export const adminService = {
 // Re-export the type so the rest of the app doesn't have to import it from
 // database.types.ts just to cast the role enum.
 export type { AppRole, Capability };
-
-// Internal helper kept for tests; production callers should go through
-// adminService.* so the schema("payments") wrapper isn't duplicated.
-async function adminRpcRaw<T>(
-  name: string,
-  args: Record<string, unknown>,
-  client?: DbClient
-): Promise<T | null> {
-  const c = client ?? (await getSupabase());
-  const { data, error } = await c
-    .schema("payments")
-    .rpc(name as never, args as never);
-  if (error) {
-    console.error(`[admin-rpc] ${name} failed:`, error);
-    return null;
-  }
-  return data as T;
-}

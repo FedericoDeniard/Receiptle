@@ -23,7 +23,7 @@
     "docker:db:migration:up": "PROJECT_ROOT=$(pwd) docker compose run --rm supabase-cli sh -lc \"supabase start && supabase migration up --include-all --local\"",
     "docker:db:types": "PROJECT_ROOT=$(pwd) docker compose run --rm supabase-cli sh -lc \"supabase start && supabase gen types typescript --local > packages/frontend/src/types/database.types.ts\"",
     "prepare": "husky",
-    "knip": "knip"
+    "knip": "knip --directory packages/frontend"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

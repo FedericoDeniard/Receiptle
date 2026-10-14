@@ -20,20 +20,6 @@ export function SuspenseFallback({
   );
 }
 
-function SuspenseFallbackCard({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={`rounded-2xl border border-[var(--text-secondary)]/20 bg-[var(--bg-primary)] p-5 shadow-sm animate-pulse ${className}`}
-    >
-      <div className="h-4 w-1/3 rounded-md bg-[var(--bg-secondary)] mb-4" />
-      <div className="space-y-2">
-        <div className="h-3 w-full rounded-md bg-[var(--bg-secondary)]" />
-        <div className="h-3 w-4/5 rounded-md bg-[var(--bg-secondary)]" />
-      </div>
-    </div>
-  );
-}
-
 export function SuspenseFallbackPage({
   className = "",
 }: {

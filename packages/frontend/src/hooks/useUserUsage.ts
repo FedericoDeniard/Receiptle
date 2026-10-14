@@ -23,7 +23,6 @@ interface UseUserUsageReturn {
   isError: boolean;
   error: unknown;
   refetch: () => void;
-  hasActivePlan: boolean;
 }
 
 export function useUserUsage(): UseUserUsageReturn {
@@ -33,7 +32,6 @@ export function useUserUsage(): UseUserUsageReturn {
   // userId is undefined.
   const subscriptionQuery = useMySubscription(userId);
   const planKey = subscriptionQuery.data?.plan?.plan_key ?? null;
-  const hasActivePlan = planKey !== null;
 
   const query = useQuery<UsageRow[]>({
     queryKey: queryKeys.usage.list(
@@ -62,6 +60,5 @@ export function useUserUsage(): UseUserUsageReturn {
     refetch: () => {
       void query.refetch();
     },
-    hasActivePlan,
   };
 }

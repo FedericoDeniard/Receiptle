@@ -19,7 +19,7 @@ export function UsageSection() {
   // One-time runtime sync check. Idempotent; subsequent calls no-op.
   assertCapabilityEnumSync();
 
-  const { rows, isLoading, isError, refetch, hasActivePlan } = useUserUsage();
+  const { rows, isLoading, isError, refetch } = useUserUsage();
   const orderedRows = sortByDisplayOrder(rows);
 
   return (
@@ -37,11 +37,7 @@ export function UsageSection() {
       ) : (
         <div className="divide-y divide-[var(--text-secondary)]/10 overflow-hidden rounded-xl bg-[var(--bg-secondary)]">
           {orderedRows.map(row => (
-            <UsageRowCard
-              key={row.capability}
-              row={row}
-              hasActivePlan={hasActivePlan}
-            />
+            <UsageRowCard key={row.capability} row={row} />
           ))}
         </div>
       )}

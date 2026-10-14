@@ -1,8 +1,6 @@
 import type { Database } from "./database.types";
 
-export type ReportRow = Database["public"]["Tables"]["reports"]["Row"];
 export type ReportInsert = Database["public"]["Tables"]["reports"]["Insert"];
-export type ReportUpdate = Database["public"]["Tables"]["reports"]["Update"];
 
 export type ReportStatus = "active" | "archived";
 

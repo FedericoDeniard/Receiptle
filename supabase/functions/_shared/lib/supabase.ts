@@ -9,10 +9,3 @@ export const supabase = createClient(supabaseUrl, serviceKey, {
     persistSession: false,
   },
 });
-
-export function createSupabaseClient() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!
-  );
-}

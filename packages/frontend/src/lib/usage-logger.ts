@@ -24,11 +24,3 @@ function format(msg: string, ctx?: LogContext): string {
 export function usageWarn(msg: string, ctx?: LogContext): void {
   console.warn(`[usage] ${format(msg, ctx)}`);
 }
-
-function usageError(msg: string, ctx?: LogContext): void {
-  console.error(`[usage] ${format(msg, ctx)}`);
-}
-
-function usageInfo(msg: string, ctx?: LogContext): void {
-  console.info(`[usage] ${format(msg, ctx)}`);
-}

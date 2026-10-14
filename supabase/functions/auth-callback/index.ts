@@ -4,13 +4,6 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import { handleCorsPreflightRequest } from "../_shared/cors.ts";
 import { encryptSecret } from "../_shared/lib/oauth-token-crypto.ts";
 
-interface OAuthCallbackResponse {
-  success: boolean;
-  message: string;
-  userId?: string;
-  gmailEmail?: string;
-}
-
 Deno.serve(async req => {
   const preflightResponse = handleCorsPreflightRequest(req);
   if (preflightResponse) {

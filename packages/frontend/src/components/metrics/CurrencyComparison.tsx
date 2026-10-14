@@ -4,7 +4,6 @@ import { TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 
 interface CurrencyComparisonProps {
   transactions: Transaction[];
-  selectedPeriod: string;
   getCurrencySymbol: (currency: string) => string;
   onCurrencySelect?: (currency: string) => void;
 }
@@ -32,10 +31,7 @@ interface CurrencyMetrics {
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
-function useCurrencyMetrics(
-  transactions: Transaction[],
-  selectedPeriod: string
-): CurrencyMetrics[] {
+function useCurrencyMetrics(transactions: Transaction[]): CurrencyMetrics[] {
   return useMemo(() => {
     if (!transactions.length) return [];
 
@@ -433,12 +429,11 @@ function BehavioralInsights({
 
 export function CurrencyComparison({
   transactions,
-  selectedPeriod,
   getCurrencySymbol,
   onCurrencySelect,
 }: CurrencyComparisonProps) {
   const { t } = useTranslation();
-  const currencyMetrics = useCurrencyMetrics(transactions, selectedPeriod);
+  const currencyMetrics = useCurrencyMetrics(transactions);
 
   if (!currencyMetrics.length) {
     return (

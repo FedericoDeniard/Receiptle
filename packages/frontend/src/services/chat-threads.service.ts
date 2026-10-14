@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../types/database.types";
 
-export interface ChatThread {
+interface ChatThread {
   id: string;
   resourceId: string;
   title: string | null;
@@ -23,38 +23,6 @@ export interface ChatMessage {
   type: string | null;
   createdAt: string;
   resourceId: string | null;
-}
-
-/** Helper to extract plain text from a MastraDBMessage content field */
-function extractMessageText(content: unknown): string {
-  // Try to parse JSON string (content is stored as text column, not jsonb)
-  let parsed = content;
-  if (typeof content === "string") {
-    try {
-      parsed = JSON.parse(content);
-    } catch {
-      // Not JSON, use the raw string as text
-      return content;
-    }
-  }
-  if (parsed && typeof parsed === "object") {
-    const obj = parsed as Record<string, unknown>;
-    // MastraMessageContentV2 has a "content" fallback with plain text
-    if (typeof obj.content === "string") return obj.content;
-    // Extract text from parts array
-    if (Array.isArray(obj.parts)) {
-      return obj.parts
-        .filter(
-          (p: unknown): p is { type: string; text: string } =>
-            typeof p === "object" &&
-            p !== null &&
-            (p as Record<string, unknown>).type === "text"
-        )
-        .map(p => p.text)
-        .join("");
-    }
-  }
-  return "";
 }
 
 /**

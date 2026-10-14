@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { LazyMotion, m, domAnimation, AnimatePresence } from "motion/react";
+import { m, AnimatePresence } from "motion/react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Command,

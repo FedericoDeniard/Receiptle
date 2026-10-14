@@ -13,16 +13,15 @@ import { usageWarn } from "../lib/usage-logger";
  * with the enum so the TypeScript layer catches drift at build time
  * (an INSERT/UPDATE with an unknown value would fail at the DB layer
  * regardless). If a new prefix is added to the enum, this union must
- * grow — TypeScript will surface the missing case in the discriminated
- * switch inside `usage-display.ts#resolveScopeLabel`.
+ * grow.
  */
-export type UsageScopeKind = "role" | "plan" | "default" | "team" | "org";
+type UsageScopeKind = "role" | "plan" | "default" | "team" | "org";
 
 /**
  * Mirrors `payments.usage_period`. Today the panel only renders monthly
  * counters, so other periods are filtered out at the resolver level.
  */
-export type UsagePeriod = "month" | "day" | "hour";
+type UsagePeriod = "month" | "day" | "hour";
 
 // ---------- Limit resolution ----------
 

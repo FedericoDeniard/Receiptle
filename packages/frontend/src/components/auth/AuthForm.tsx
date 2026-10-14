@@ -88,7 +88,6 @@ function MessageBanner({
 }: {
   message: { type: "success" | "error"; text: string } | null;
 }) {
-  const { t } = useTranslation();
   if (!message) return null;
   return (
     <div

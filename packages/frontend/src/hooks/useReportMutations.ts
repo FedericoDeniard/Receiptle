@@ -9,26 +9,26 @@ import type {
   ReportSummary,
 } from "../types/reports";
 
-export interface ReportFormInput {
+interface ReportFormInput {
   title: string;
   description?: string | null;
   dateRangeStart?: string | null;
   dateRangeEnd?: string | null;
 }
 
-export interface ReportUpdateInput {
+interface ReportUpdateInput {
   title?: string;
   description?: string | null;
   dateRangeStart?: string | null;
   dateRangeEnd?: string | null;
 }
 
-export interface AssignTransactionInput {
+interface AssignTransactionInput {
   transactionId: string;
   reportId: string | null;
 }
 
-export interface AssignTransactionsInput {
+interface AssignTransactionsInput {
   transactionIds: string[];
   reportId: string | null;
 }

@@ -34,15 +34,6 @@ function formatFileSize(bytes: number) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
-type TransactionFormData = {
-  transaction_type: "income" | "expense";
-  merchant: string;
-  amount: string;
-  currency: string;
-  category: string;
-  transaction_date: string;
-};
-
 interface UploadTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;

@@ -30,7 +30,7 @@
  *
  * Runner: `bun run test:usage-schema`.
  */
-import { assert, assertEquals } from "jsr:@std/assert";
+import { assert } from "jsr:@std/assert";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");

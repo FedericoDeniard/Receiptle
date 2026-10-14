@@ -1,13 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["build.ts", "src/frontend.tsx", "src/index.tsx", "src/sw.ts"],
-  "project": ["src/**/*.{ts,tsx}"],
-  "ignoreDependencies": [
-    "@types/bun",
-    "@types/react",
-    "@types/react-dom",
-    "bun-plugin-tailwind",
-    "sharp"
-  ],
-  "ignore": ["src/test_mdiv.tsx", "src/types/database.types.ts"]
+  "entry": ["src/frontend.tsx", "src/sw.ts", "doctor.config.ts"],
+  "project": ["src/**/*.{ts,tsx,css}"],
+  "ignore": ["src/types/database.types.ts"]
 }

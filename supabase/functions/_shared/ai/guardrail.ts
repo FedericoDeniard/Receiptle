@@ -1,6 +1,12 @@
 import { z } from "npm:zod";
-import { stripHtml } from "npm:string-strip-html";
 import { GUARDRAIL_SYSTEM_PROMPT } from "../prompts/guardrail-system.ts";
+import { buildGuardrailUserPrompt } from "./guardrail-input.ts";
+import type { ImageAttachment } from "../lib/attachment-extractor.ts";
+import {
+  shouldProcessImageEmailWithDecisions,
+  shouldProcessTextEmailWithDecisions,
+  type DecisionsTextProvider,
+} from "./decisions-guardrail.ts";
 
 export const GuardrailResponseSchema = z.object({
   shouldProcess: z
@@ -19,26 +25,6 @@ export type GuardrailResponse = z.infer<typeof GuardrailResponseSchema>;
 
 const GUARDRAIL_MODEL = "google/gemini-2.5-flash-lite";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-
-function prepareEmailContent(emailContent: string): string {
-  // Step 1: Remove <style> blocks (tag + content)
-  let cleaned = emailContent.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ");
-  // Step 2: Remove <script> blocks (tag + content)
-  cleaned = cleaned.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ");
-  // Step 3: Remove loose CSS rules (selector { ... }) and @media blocks
-  cleaned = cleaned.replace(/@media[^{]*\{[\s\S]*?\}\s*\}/gi, " ");
-  cleaned = cleaned.replace(/[^{}\n]+\{[^{}]*\}/g, " ");
-  // Step 4: Strip remaining HTML tags
-  cleaned = stripHtml(cleaned).result;
-  // Step 5: Collapse whitespace
-  return cleaned.replace(/\s+/g, " ").trim();
-}
-
-function buildGuardrailUserPrompt(emailContent: string): string {
-  const prepared = prepareEmailContent(emailContent).slice(0, 1500);
-  return `Email content (first 1500 chars of cleaned text):
-${prepared}`;
-}
 
 export async function shouldProcessEmail(
   emailContent: string,
@@ -204,4 +190,100 @@ export async function shouldProcessEmail(
       reason: "Guardrail error, defaulting to allow processing",
     };
   }
+}
+
+// ---------------------------------------------------------------------------
+// Provider dispatch
+// ---------------------------------------------------------------------------
+// Text-only emails always run the same cascade: JEV → Gemini → allow.
+// JEV is the primary; only an *error* falls through to Gemini (a rejection is
+// final). Gemini fails open on its own, so if it errors too the email goes to
+// the Grok extraction — the degraded mode is "no guardrail", never a lost
+// email. There is deliberately no env switch between Gemini and JEV: the
+// cascade is the configuration.
+// Emails with image attachments always run gpt-6-luna-decisions → allow →
+// Grok (Gemini has no vision, so it is not part of that chain).
+// EMAIL_IMAGE_GUARDRAIL_PROVIDER=none is a kill-switch that restores the
+// historical auto-pass for image emails.
+// Emails with file (PDF) attachments always skip the guardrail — unchanged.
+
+export type EmailGuardrailProvider = "gemini" | DecisionsTextProvider;
+export type EmailImageGuardrailProvider = "none" | "openai-decisions";
+
+export interface EmailGuardrailInput {
+  images?: ImageAttachment[];
+  /** True when the email carries PDF/file attachments (guardrail skipped). */
+  hasFileAttachments?: boolean;
+}
+
+export interface EmailGuardrailResult extends GuardrailResponse {
+  provider: EmailGuardrailProvider | EmailImageGuardrailProvider;
+  /** Set when the primary decisions guardrail errored and Gemini answered. */
+  fallbackFrom?: EmailGuardrailProvider;
+  model?: string;
+  probability?: number | null;
+  completedProbability?: number | null;
+  latencyMs?: number;
+  cost?: number | null;
+}
+
+export function resolveEmailImageGuardrailProvider(): EmailImageGuardrailProvider {
+  const value = (process.env.EMAIL_IMAGE_GUARDRAIL_PROVIDER ?? "")
+    .trim()
+    .toLowerCase();
+  return value === "none" ? "none" : "openai-decisions";
+}
+
+// Text cascade: JEV (primary) → Gemini (on error) → allow (Gemini fails open).
+// A rejection by JEV is final; only transport/parsing errors fall through.
+async function runTextGuardrailChain(
+  emailContent: string
+): Promise<EmailGuardrailResult> {
+  const primary = await shouldProcessTextEmailWithDecisions(emailContent, {
+    provider: "jev",
+  });
+  if (primary.error === undefined) {
+    return primary;
+  }
+
+  console.warn(
+    "[guardrail] jev decisions guardrail failed, falling back to gemini",
+    { error: primary.error }
+  );
+  const fallback = await shouldProcessEmail(emailContent, false);
+  return { ...fallback, provider: "gemini", fallbackFrom: "jev" };
+}
+
+export async function runEmailGuardrail(
+  emailContent: string,
+  input: EmailGuardrailInput = {}
+): Promise<EmailGuardrailResult> {
+  if (input.hasFileAttachments) {
+    console.log(
+      "[guardrail] Allowed: email has file attachments, cannot pre-filter"
+    );
+    return {
+      shouldProcess: true,
+      reason: "Email has file attachments, skipping guardrail",
+      provider: "none",
+    };
+  }
+
+  const images = input.images ?? [];
+  if (images.length > 0) {
+    const imageProvider = resolveEmailImageGuardrailProvider();
+    if (imageProvider === "none") {
+      console.log(
+        "[guardrail] Allowed: email has image attachments, image guardrail disabled"
+      );
+      return {
+        shouldProcess: true,
+        reason: "Email has image attachments, skipping guardrail",
+        provider: "none",
+      };
+    }
+    return shouldProcessImageEmailWithDecisions(images);
+  }
+
+  return runTextGuardrailChain(emailContent);
 }

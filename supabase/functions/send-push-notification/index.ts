@@ -7,6 +7,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import {
   ApplicationServer,
   importVapidKeys,
+  PushMessageError,
   type ExportedVapidKeys,
 } from "jsr:@negrel/webpush@0.5";
 import { requireInternalAuth } from "../_shared/auth.ts";
@@ -379,10 +380,25 @@ Deno.serve(async req => {
           await subscriber.pushTextMessage(pushPayload, {});
           sent++;
         } catch (err) {
-          const status = (err as { status?: number })?.status;
-          if (status === 410 || status === 404) {
-            // Subscription is expired or gone — queue for cleanup
-            expiredEndpoints.push(sub.endpoint);
+          // @negrel/webpush throws PushMessageError with an empty `message`
+          // and no top-level `status`; the push service response lives at
+          // `err.response`. Read the status from there (and use toString(),
+          // which includes status + statusText) so expired subscriptions are
+          // actually detected and 4xx failures are debuggable.
+          if (err instanceof PushMessageError) {
+            const status = err.response.status;
+            if (status === 410 || status === 404) {
+              // Subscription is expired or gone — queue for cleanup
+              expiredEndpoints.push(sub.endpoint);
+            } else {
+              console.error("[send-push-notification] Push delivery error", {
+                endpoint: sub.endpoint,
+                status,
+                statusText: err.response.statusText,
+                error: err.toString(),
+              });
+              failed++;
+            }
           } else {
             const msg = err instanceof Error ? err.message : String(err);
             console.error("[send-push-notification] Push delivery error", {

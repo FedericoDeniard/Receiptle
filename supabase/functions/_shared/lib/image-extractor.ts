@@ -1,6 +1,7 @@
 import Tesseract from "npm:tesseract.js@7.0.0";
-import { google } from "npm:googleapis@173.0.0";
-import type { Gmail } from "npm:googleapis@173.0.0";
+import { google, type gmail_v1 } from "npm:googleapis@185.0.0";
+
+type Gmail = gmail_v1.Gmail;
 
 const MAX_IMAGE_SIZE_BYTES = 3 * 1024 * 1024; // 3MB
 const MAX_IMAGES_PER_EMAIL = 3;

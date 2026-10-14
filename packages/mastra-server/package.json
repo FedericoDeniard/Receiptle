@@ -11,31 +11,31 @@
     "export-schema": "bun ./scripts/export-mastra-schema.ts"
   },
   "dependencies": {
-    "@ai-sdk/xai": "^4.0.16",
+    "@ai-sdk/xai": "^5.0.21",
     "@langfuse/otel": "^5.13.1",
     "@langfuse/tracing": "^5.13.1",
     "@mastra/ai-sdk": "latest",
     "@mastra/auth-supabase": "latest",
     "@mastra/core": "latest",
-    "@mastra/hono": "^1.5.7",
+    "@mastra/hono": "^1.7.18",
     "@mastra/memory": "latest",
     "@mastra/pg": "latest",
     "@mastra/server": "latest",
     "@openrouter/ai-sdk-provider": "latest",
     "@opentelemetry/sdk-node": "^0.223.0",
-    "@supabase/supabase-js": "^2.110.7",
-    "ai": "^7.0.31",
+    "@supabase/supabase-js": "^2.117.3",
+    "ai": "^7.0.138",
     "expr-eval": "^2.0.2",
-    "googleapis": "^173.0.0",
-    "hono": "^4.12.30",
+    "googleapis": "^185.0.0",
+    "hono": "^4.13.13",
     "pdf-parse": "^2.4.5",
-    "string-strip-html": "^13.5.3",
+    "string-strip-html": "^13.7.7",
     "tesseract.js": "^7.0.0",
-    "unpdf": "^1.6.2",
-    "zod": "^4.4.3"
+    "unpdf": "^1.8.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@types/node": "^26.1.1",
+    "@types/node": "^26.6.5",
     "mastra": "latest",
     "typescript": "^7.0.2"
   }

@@ -3,6 +3,7 @@ import { CompositeAuth, SimpleAuth } from "@mastra/core/server";
 import { PostgresStore } from "@mastra/pg";
 import { MastraAuthSupabase } from "@mastra/auth-supabase";
 import { financialAgent } from "./agents/financial-agent";
+import { topicClassifier } from "./classifiers/topic";
 
 const supabaseDbUrl = process.env.SUPABASE_DB_URL;
 if (supabaseDbUrl) {
@@ -34,6 +35,7 @@ const storage = new PostgresStore({
 // `ctx.requestContext.get("userId")` / `ctx.requestContext.get("userRole")`.
 export const mastra = new Mastra({
   agents: { financialAgent },
+  classifiers: { topicClassifier },
   storage,
   server: {
     auth: new CompositeAuth([

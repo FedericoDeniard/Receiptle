@@ -56,7 +56,8 @@ export const financialAgent = new Agent({
   },
   inputProcessors: [
     // Single guardrail: TopicGuardrailProcessor classifies every message
-    // on-topic vs off-topic. Was previously preceded by PromptInjectionDetector
+    // on-topic vs off-topic with the JEV decision model (via OpenRouter's
+    // Decisions API). Was previously preceded by PromptInjectionDetector
     // but it added ~3-7s of latency per request (full LLM call before the
     // main agent) and produced false positives on legitimate financial
     // queries like "edit my last transaction". TopicGuardrail's strict

@@ -13,9 +13,11 @@ import {
 } from "../_shared/lib/gmail-auth.ts";
 import { decryptTokenRow } from "../_shared/lib/oauth-token-crypto.ts";
 import { incrementGmailSyncUsage } from "../_shared/lib/usage-counter.ts";
-
-// Set to avoid processing the same message multiple times
-const processedMessages = new Set<string>();
+import {
+  GmailPubSubPayloadError,
+  parseGmailPubSubPush,
+  verifyGmailPubSubOidcToken,
+} from "../_shared/lib/gmail-pubsub.ts";
 
 Deno.serve(async req => {
   const preflightResponse = handleCorsPreflightRequest(req);
@@ -32,38 +34,62 @@ Deno.serve(async req => {
   }
 
   try {
-    // Verify the request is from Google Pub/Sub
-    const authHeader = req.headers.get("authorization");
+    const oidcConfig = {
+      audience: Deno.env.get("PUBSUB_OIDC_AUDIENCE") ?? "",
+      serviceAccountEmail:
+        Deno.env.get("PUBSUB_OIDC_SERVICE_ACCOUNT_EMAIL") ?? "",
+      serviceAccountSubject:
+        Deno.env.get("PUBSUB_OIDC_SERVICE_ACCOUNT_SUB") ?? "",
+    };
+    const expectedSubscription =
+      Deno.env.get("PUBSUB_EXPECTED_SUBSCRIPTION") ?? "";
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      console.warn("Webhook received without proper authorization header");
-      // TODO: enforce auth rejection after configuring Pub/Sub OIDC token verification
-    }
-
-    // Verify the message has the expected structure
-    const body = await req.json();
-
-    if (!body || !body.message || !body.message.data) {
-      console.error("Invalid webhook payload structure");
-      return new Response(JSON.stringify({ error: "Invalid payload" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (
+      !oidcConfig.audience ||
+      !oidcConfig.serviceAccountEmail ||
+      !oidcConfig.serviceAccountSubject ||
+      !expectedSubscription
+    ) {
+      console.error("Pub/Sub OIDC configuration is incomplete");
+      return new Response("Webhook authentication is not configured", {
+        status: 503,
+        headers: corsHeaders,
       });
     }
 
-    // Decode the base64 message
-    const data = JSON.parse(atob(body.message.data));
-
-    const gmailEmail = data.emailAddress;
-    const historyId = data.historyId;
-
-    // Avoid processing the same historyId multiple times
-    const historyKey = `${gmailEmail}-${historyId}`;
-    if (processedMessages.has(historyKey)) {
-      return new Response("OK", { status: 200, headers: corsHeaders });
+    try {
+      await verifyGmailPubSubOidcToken(
+        req.headers.get("authorization"),
+        oidcConfig
+      );
+    } catch {
+      console.warn("Rejected Gmail Pub/Sub push with invalid OIDC identity");
+      return new Response("Unauthorized", {
+        status: 401,
+        headers: corsHeaders,
+      });
     }
 
-    processedMessages.add(historyKey);
+    let notification;
+    try {
+      notification = parseGmailPubSubPush(
+        await req.text(),
+        expectedSubscription
+      );
+    } catch (error) {
+      if (error instanceof GmailPubSubPayloadError) {
+        console.warn("Rejected invalid Gmail Pub/Sub payload", {
+          status: error.status,
+        });
+        return new Response("Invalid Pub/Sub payload", {
+          status: error.status,
+          headers: corsHeaders,
+        });
+      }
+      throw error;
+    }
+
+    const { gmailEmail, historyId } = notification;
     console.log("Processing notification", { gmailEmail });
 
     const supabase = createClient(

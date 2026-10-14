@@ -135,6 +135,10 @@ Set these in your remote project (Dashboard or CLI):
 - `OAUTH_REDIRECT_URI`
 - `GOOGLE_PROJECT_ID`
 - `PUBSUB_TOPIC`
+- `PUBSUB_OIDC_AUDIENCE`
+- `PUBSUB_OIDC_SERVICE_ACCOUNT_EMAIL`
+- `PUBSUB_OIDC_SERVICE_ACCOUNT_SUB`
+- `PUBSUB_EXPECTED_SUBSCRIPTION`
 - `XAI_API_KEY`
 - `LANGFUSE_SECRET_KEY`
 - `LANGFUSE_PUBLIC_KEY`
@@ -156,6 +160,10 @@ supabase secrets set \
   OAUTH_REDIRECT_URI=... \
   GOOGLE_PROJECT_ID=... \
   PUBSUB_TOPIC=... \
+  PUBSUB_OIDC_AUDIENCE=... \
+  PUBSUB_OIDC_SERVICE_ACCOUNT_EMAIL=... \
+  PUBSUB_OIDC_SERVICE_ACCOUNT_SUB=... \
+  PUBSUB_EXPECTED_SUBSCRIPTION=... \
   XAI_API_KEY=... \
   LANGFUSE_SECRET_KEY=... \
   LANGFUSE_PUBLIC_KEY=... \
@@ -202,6 +210,18 @@ select name, length(decrypted_secret) as secret_len, updated_at
 from vault.decrypted_secrets
 where name = 'INTERNAL_FUNCTIONS_SECRET';
 ```
+
+### Gmail Pub/Sub push subscription
+
+Gmail watches publish to a shared Pub/Sub topic. Provision one authenticated push subscription per GCP environment, not one per Gmail account. The provisioning script creates or updates the dedicated push service account, grants the Pub/Sub service agent token-creation permission on that account, ensures Gmail can publish to the topic, and creates or updates a non-expiring push subscription:
+
+```bash
+GOOGLE_PROJECT_ID=gen-lang-client-0320504047 \
+SUPABASE_URL=https://nswqfbakcbfaxuoguqhe.supabase.co \
+bash scripts/gcp/provision-gmail-pubsub-subscription.sh
+```
+
+The script prints the four `PUBSUB_OIDC_*` / `PUBSUB_EXPECTED_SUBSCRIPTION` values to set as Supabase Edge Function secrets. It does not create or export service-account keys. `gmail-webhook` verifies the Google-signed OIDC token, expected service-account identity, audience, and subscription envelope before reading the payload. Do not create an unauthenticated push subscription.
 
 ## Toolbox container
 

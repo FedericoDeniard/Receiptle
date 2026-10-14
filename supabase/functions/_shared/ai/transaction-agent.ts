@@ -2,7 +2,7 @@ import {
   TransactionResponseSchema,
   type TransactionResponse,
 } from "./schemas.ts";
-import { shouldProcessEmail } from "./guardrail.ts";
+import { runEmailGuardrail } from "./guardrail.ts";
 import { EMAIL_EXTRACTION_SYSTEM } from "../prompts/email-extraction.ts";
 import { generateText, Output } from "npm:ai@7.0.138";
 import { createXai } from "npm:@ai-sdk/xai@5.0.21";
@@ -327,15 +327,14 @@ export async function extractTransactionFromEmail(
   userClarifications?: string
 ): Promise<TransactionResponse> {
   // === GUARDRAIL: cheap model pre-filter ===
-  const hasAttachments =
-    (images && images.length > 0) ||
+  const hasFileAttachments =
     (pdfTexts && pdfTexts.length > 0) ||
     (pdfFallbackAttachments && pdfFallbackAttachments.length > 0);
 
-  const guardrailResult = await shouldProcessEmail(
-    emailContent,
-    hasAttachments
-  );
+  const guardrailResult = await runEmailGuardrail(emailContent, {
+    images,
+    hasFileAttachments,
+  });
   if (!guardrailResult.shouldProcess) {
     console.log("[guardrail] Rejected email:", guardrailResult.reason);
     return {

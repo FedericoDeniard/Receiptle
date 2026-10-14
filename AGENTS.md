@@ -92,10 +92,22 @@ Two test surfaces; the rest of the repo has no unit tests.
    `unset OPENROUTER_API_KEY` is intentional — Grok-only path. Requires `XAI_API_KEY` in `supabase/functions/.env`.
 
 2. **Frontend E2E tests** (`bun test`, Stagehand browser driver):
+
    ```bash
    cd packages/frontend && bun test tests/login.test.ts tests/register.test.ts
    ```
+
    Requires `XAI_API_KEY` in `packages/frontend/.env` and the Docker stack running (the tests hit `http://localhost:3000`).
+
+3. **Guardrail comparison harness** (Deno, hits live OpenRouter — Gemini, JEV and gpt-6-luna-decisions):
+
+   ```bash
+   bun run test:guardrail:comparison
+   # Internally: cd supabase && deno test --no-check --env-file=functions/.env \
+   #   --allow-env --allow-sys=hostname --allow-net functions/_shared/ai/guardrail-comparison.test.ts
+   ```
+
+   Observational eval over the shared labeled corpus; fails only on guardrail call errors. Requires the local Supabase stack (calls go through the `http_post` RPC) and `OPENROUTER_API_KEY` in `supabase/functions/.env`. Decisions calls are paid. See `supabase/functions/_shared/ai/README.md`.
 
 ## Environment files
 
@@ -144,7 +156,7 @@ Per `.agents/skills/use-realtime`: use `broadcast` (not `postgres_changes`) for 
 - Gmail watches live in `gmail_watches`. Renewed daily by the `renew-watches` edge function, called by `public.renew_gmail_watches()` SQL function via pg_cron at 02:00 UTC. Internal call uses `INTERNAL_FUNCTIONS_SECRET`.
 - JWT claims: `custom_access_token_hook` injects `user_role` (`user`/`tester`/`admin`) and `user_capabilities` (string array of `payments.capability` enum values: `gmail_sync`, `ai_assistant`, `push_notifications`, `advanced_reports`, `process_documents`, ...). See `docs/access-control.md` for the full access-control matrix.
 - The chat/assistant feature is gated by `CHAT_ENABLED` env var (default `true`). When `false`, `/assistant` and `/assistant/:threadId` redirect to `/dashboard` and the sidebar hides the link.
-- AI providers: xAI Grok for transaction extraction (edge function pipeline via `transaction-agent.ts`), OpenRouter for the chat agent (`mastra-server/src/mastra/agents/financial-agent.ts`) and the topic guardrail. Langfuse traces both.
+- AI providers: xAI Grok for transaction extraction (edge function pipeline via `transaction-agent.ts`), OpenRouter for the chat agent (`mastra-server/src/mastra/agents/financial-agent.ts`), the chat topic guardrail and the email guardrails. Email guardrails run fixed cascades via OpenRouter's alpha Decisions API: text-only emails go `typesafe/jev-1.13` → Gemini (only on JEV errors; rejections are final) → allow; image emails go `openai/gpt-6-luna-decisions` → allow (`EMAIL_IMAGE_GUARDRAIL_PROVIDER=none` disables the image guardrail). All guardrails fail open. Langfuse traces both.
 
 ## Frontend architecture (Bun.serve, not Vite)
 

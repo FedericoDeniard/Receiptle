@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "pnpm --parallel -r run dev",
     "test:grok:transaction-agent": "cd supabase && unset OPENROUTER_API_KEY && deno test --no-check --env-file=\"functions/.env\" --allow-env --allow-sys=hostname --allow-net \"functions/_shared/ai/transaction-agent.integration.test.ts\"",
+    "test:guardrail:comparison": "cd supabase && deno test --no-check --env-file=\"functions/.env\" --allow-env --allow-sys=hostname --allow-net --allow-read=functions/_shared/ai/fixtures \"functions/_shared/ai/guardrail-comparison.test.ts\"",
     "test:seed-emails-usage": "cd supabase && unset OPENROUTER_API_KEY && deno test --no-check --env-file=\"functions/.env\" --allow-env --allow-net \"functions/_shared/seed-emails-usage.integration.test.ts\"",
     "test:usage-schema": "cd supabase && unset OPENROUTER_API_KEY && deno test --no-check --env-file=\"functions/.env\" --allow-env --allow-net \"functions/_shared/usage-schema.integration.test.ts\"",
     "typecheck": "cd packages/frontend && bun x tsc --noEmit",

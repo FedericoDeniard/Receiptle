@@ -9,15 +9,6 @@ import {
 
 type JsonHeaders = Record<string, string>;
 
-export type AuthContext =
-  | { mode: "user"; user: User; token: string; role: UserRole }
-  | { mode: "internal"; token: string };
-
-// re-export from the canonical location so existing imports keep working.
-// callers should prefer importing directly from "./features.ts" in new code.
-export type { FeatureKey, UserRole } from "./features.ts";
-export { FEATURES, hasMinRole, roleLevel, VALID_ROLES } from "./features.ts";
-
 function getBearerToken(req: Request): string | null {
   const authHeader = req.headers.get("authorization");
   if (!authHeader) return null;
@@ -188,26 +179,4 @@ export function requireInternalAuth(
   }
 
   return { token };
-}
-
-export async function resolveAuthContext(
-  req: Request,
-  corsHeaders: JsonHeaders
-): Promise<AuthContext | Response> {
-  const token = getBearerToken(req);
-  if (!token) {
-    return unauthorized(corsHeaders, "Missing or invalid authorization header");
-  }
-
-  const internalSecret = process.env.INTERNAL_FUNCTIONS_SECRET;
-  if (internalSecret && token === internalSecret) {
-    return { mode: "internal", token };
-  }
-
-  const user = await getUserFromToken(token);
-  if (!user) {
-    return unauthorized(corsHeaders, "Invalid or expired token");
-  }
-
-  return { mode: "user", user, token, role: getRoleFromToken(token) };
 }

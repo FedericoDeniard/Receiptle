@@ -33,7 +33,7 @@ export interface ChunkResult {
   total: number;
 }
 
-export interface ProcessorDeps {
+interface ProcessorDeps {
   supabase: SupabaseClient;
   tokenData: OAuthTokenRow;
   userId: string;

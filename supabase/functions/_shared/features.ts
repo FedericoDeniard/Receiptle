@@ -70,14 +70,6 @@ export const FEATURES = {
 
 export type FeatureKey = keyof typeof FEATURES;
 
-export function requiredRoleFor(featureKey: FeatureKey): UserRole {
-  return FEATURES[featureKey];
-}
-
-export function isFeatureKey(x: unknown): x is FeatureKey {
-  return typeof x === "string" && x in FEATURES;
-}
-
 /**
  * Capability vocabulary used by `payments.plan_capabilities`. Mirrors
  * `packages/frontend/src/lib/capabilities.ts#CAPABILITIES` and

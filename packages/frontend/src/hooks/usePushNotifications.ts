@@ -103,17 +103,3 @@ export function usePushNotifications() {
     unsubscribe,
   };
 }
-
-/**
- * Registers the service worker on mount.
- * Call this once near the app root (e.g. in App.tsx or a top-level layout).
- * Safe to call even if the SW is already registered — the browser is idempotent.
- */
-async function registerServiceWorker(): Promise<void> {
-  if (!("serviceWorker" in navigator)) return;
-  try {
-    await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-  } catch (err) {
-    console.error("[sw] Registration failed:", err);
-  }
-}

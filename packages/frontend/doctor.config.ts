@@ -17,6 +17,13 @@ export default defineConfig({
         files: ["src/pages/Home.tsx"],
         rules: ["react-doctor/no-pass-data-to-parent"],
       },
+      {
+        files: [
+          "src/components/notifications/NotificationsPanel.tsx",
+          "src/pages/Metrics.tsx",
+        ],
+        rules: ["react-doctor/no-high-complexity-react-function"],
+      },
     ],
   },
 });

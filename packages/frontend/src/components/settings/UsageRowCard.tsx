@@ -4,7 +4,6 @@ import type { UsageRow } from "../../services/usage.service";
 
 interface UsageRowCardProps {
   row: UsageRow;
-  hasActivePlan: boolean;
 }
 
 const STATUS_BAR_CLASS = {
@@ -13,7 +12,7 @@ const STATUS_BAR_CLASS = {
   exceeded: "bg-[var(--error)]",
 } as const;
 
-export function UsageRowCard({ row, hasActivePlan }: UsageRowCardProps) {
+export function UsageRowCard({ row }: UsageRowCardProps) {
   const { t, i18n } = useTranslation();
   const label = t(`settings.usage.capabilities.${row.capability}.label`, {
     defaultValue: row.capability.replace(/_/g, " "),
@@ -43,12 +42,7 @@ export function UsageRowCard({ row, hasActivePlan }: UsageRowCardProps) {
         {row.unlimited ? (
           <UnlimitedMetric />
         ) : (
-          <TrackedMetric
-            row={row}
-            status={status}
-            hasActivePlan={hasActivePlan}
-            locale={i18n.language}
-          />
+          <TrackedMetric row={row} locale={i18n.language} />
         )}
       </div>
     </div>
@@ -113,17 +107,10 @@ function UnlimitedMetric() {
 
 interface TrackedMetricProps {
   row: UsageRow;
-  status: ReturnType<typeof getUsageRowStatus>;
-  hasActivePlan: boolean;
   locale: string;
 }
 
-function TrackedMetric({
-  row,
-  status,
-  hasActivePlan,
-  locale,
-}: TrackedMetricProps) {
+function TrackedMetric({ row, locale }: TrackedMetricProps) {
   const { t } = useTranslation();
   const resetDate = formatResetDateLocalized(row.resetsAt, locale);
 

@@ -91,7 +91,7 @@ function NotificationRow({
   onSelect: (checked: boolean) => void;
   onOpen: () => void;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const title = t(
     item.title_i18n_key,
     item.i18n_params as Record<string, unknown>

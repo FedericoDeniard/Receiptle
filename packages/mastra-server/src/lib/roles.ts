@@ -12,20 +12,6 @@
  */
 export type UserRole = "user" | "tester" | "admin";
 
-const ROLE_LEVEL: Readonly<Record<UserRole, number>> = Object.freeze({
-  user: 0,
-  tester: 1,
-  admin: 2,
-});
-
-export function roleLevel(role: UserRole): number {
-  return ROLE_LEVEL[role];
-}
-
-export function hasMinRole(actual: UserRole, required: UserRole): boolean {
-  return roleLevel(actual) >= roleLevel(required);
-}
-
 const VALID_ROLES: ReadonlySet<string> = new Set<UserRole>([
   "user",
   "tester",

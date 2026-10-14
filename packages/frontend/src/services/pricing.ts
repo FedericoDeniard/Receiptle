@@ -8,7 +8,7 @@ import type { Database } from "../types/database.types";
 
 type PlanRow = Database["payments"]["Tables"]["plans"]["Row"];
 
-export type Currency = string;
+type Currency = string;
 
 export interface FreePlanCard {
   kind: "free";

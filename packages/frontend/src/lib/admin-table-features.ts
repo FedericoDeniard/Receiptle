@@ -18,5 +18,3 @@ export const adminTableFeatures = tableFeatures({
   rowSortingFeature,
   sortedRowModel: createSortedRowModel(),
 });
-
-export type AdminTableFeatures = typeof adminTableFeatures;

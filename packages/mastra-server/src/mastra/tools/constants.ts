@@ -20,7 +20,3 @@ export const REPORT_LIST_STATUS_VALUES = [
   ...REPORT_STATUS_VALUES,
   "all",
 ] as const;
-
-export type CategoryValue = (typeof CATEGORY_VALUES)[number];
-export type TransactionTypeValue = (typeof TRANSACTION_TYPE_VALUES)[number];
-export type ReportStatusValue = (typeof REPORT_STATUS_VALUES)[number];

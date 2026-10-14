@@ -99,7 +99,7 @@ of the raw error. See `packages/frontend/src/i18n/locales/{en,es}.json#errors.pr
 
 | `FEATURES` key    | Current value | Connected edge function                      | Frontend page/action                    | Purpose                                                                                    |
 | ----------------- | ------------- | -------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `seed`            | `user`        | `seed-emails`                                | Settings → "Import emails" modal        | Bulk-import historical emails from Gmail. Likely candidate to flip to `tester` (dev tool). |
+| `seed`            | `user`        | (none — mastra-server `/api/seed-emails`)    | Settings → "Import emails" modal        | Bulk-import historical emails from Gmail. Likely candidate to flip to `tester` (dev tool). |
 | `chat`            | `user`        | (none — chat runs in mastra-server)          | `/assistant` route                      | AI assistant chat surface.                                                                 |
 | `metrics`         | `user`        | (none — direct supabase reads)               | `/metrics` route, sidebar link          | Spending analytics and reports.                                                            |
 | `transactions`    | `user`        | (none — direct supabase reads)               | `/transactions` route, sidebar link     | Transaction list and CRUD.                                                                 |
@@ -146,7 +146,7 @@ sees and what `custom_access_token_hook` writes into the
 1. **Default grants** (`payments.default_capabilities`) — every
    authenticated user. The table starts empty; rows are inserted
    manually (e.g. `INSERT INTO payments.default_capabilities VALUES
-('ai_assistant')`) to give a capability to all users without a
+   ('ai_assistant')`) to give a capability to all users without a
    subscription. Used for the free-tier surface.
 2. **Plan grants** (`payments.plan_capabilities`) — each row ties a
    `plan_id` to a capability. Granted per plan in the seed
@@ -195,7 +195,7 @@ rejecting them on that capability. No code change needed.
    `packages/mastra-server/src/lib/capabilities.ts`.
 3. Call `requireCapability(auth, "<key>", corsHeaders)` in the
    relevant edge function (or `requireCapability({userId,
-supabaseToken, role}, "<key>")` in mastra-server routes).
+   supabaseToken, role}, "<key>")` in mastra-server routes).
 4. Add the grant for the demo `lite_monthly` plan in the seed section
    4 of `006_payments_demo.sql`.
 5. If the capability is AI-backed and should be usage-capped, add a

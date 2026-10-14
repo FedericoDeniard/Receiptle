@@ -9,6 +9,10 @@ dist
 *.tgz
 .mastra/
 
+# debug artifacts
+*.heapsnapshot
+.debug/
+
 # code coverage
 coverage
 *.lcov

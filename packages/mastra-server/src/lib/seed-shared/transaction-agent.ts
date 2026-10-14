@@ -4,7 +4,6 @@ import { shouldProcessEmail } from "./guardrail";
 import { EMAIL_EXTRACTION_SYSTEM } from "./prompts/email-extraction";
 import { generateText, Output } from "ai";
 import { createXai } from "@ai-sdk/xai";
-import { z } from "zod";
 import { traceOperation } from "./langfuse";
 import type {
   ImageAttachment,

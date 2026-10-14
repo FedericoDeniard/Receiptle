@@ -16,7 +16,7 @@ receiptle/
 │   └── mastra-server/    # Standalone Hono + @mastra/hono AI server (port 4111)
 │       └── src/{mastra/{agents,tools,routes},middleware,lib,services}
 ├── supabase/
-│   ├── functions/        # 14 Deno Edge Functions
+│   ├── functions/        # 12 Deno Edge Functions
 │   │   └── _shared/      # Shared code (auth, cors, gmail-auth, ai/, lib/)
 │   ├── migrations/       # 95 SQL files, named <timestamp>_<name>.sql
 │   └── seeds/            # Run on `db reset` per supabase/config.toml
@@ -130,10 +130,10 @@ Per `.agents/skills/use-realtime`: use `broadcast` (not `postgres_changes`) for 
 
 ### Supabase Edge Functions (Deno)
 
-- Imports MUST use `jsr:` or `npm:` specifiers, never bare. See `supabase/deno.json` for shared aliases.
+- Imports MUST use `jsr:` or `npm:` specifiers, never bare.
 - Shared utilities go in `supabase/functions/_shared/`. **No cross-imports between functions** — only into `_shared/`.
 - Use `Deno.serve` (never `https://deno.land/std/http/server.ts`).
-- All 14 functions have `verify_jwt = false` in `supabase/config.toml` and do their own auth. Public functions (webhooks, auth-callback, health) use `requireInternalAuth(req)` with `INTERNAL_FUNCTIONS_SECRET`. User functions use `requireUserAuth` then `requireMinRole` and `requireCapability` from `_shared/auth.ts` and `_shared/capabilities.ts`.
+- All 12 functions have `verify_jwt = false` in `supabase/config.toml` and do their own auth. Public functions (webhooks, auth-callback, health) use `requireInternalAuth(req)` with `INTERNAL_FUNCTIONS_SECRET`. User functions use `requireUserAuth` then `requireMinRole` and `requireCapability` from `_shared/auth.ts` and `_shared/capabilities.ts`.
 - `process.env` works (Node compat) — shared modules target both Deno edge functions and the Bun mastra-server.
 - File writes only allowed in `/tmp`.
 
@@ -168,7 +168,7 @@ Per `.agents/skills/use-realtime`: use `broadcast` (not `postgres_changes`) for 
 - `packages/frontend/src/components/ai-elements/` — vendored via the `ai-elements` CLI (`pnpm dlx ai-elements@latest add <name>`). Currently used: `prompt-input`, `message`, `conversation`, `suggestion`, `attachments`. These are committed source, not runtime npm imports.
 - `packages/frontend/src/components/ui/shadcn/` — vendored shadcn primitives, same model. Pinned by `components.json`.
 - `bun.lock` is **gitignored** at the root — `pnpm-lock.yaml` is the lockfile of record. `packages/frontend/bun.lock` is also local-only.
-- `server.heapsnapshot`, `tui.heapsnapshot` — debug artifacts, ignored.
+- `*.heapsnapshot` and `.debug/` — debug artifacts, ignored.
 - `bruno/**/environments/` and `environments.bru` — local-only, ignored (contain dev secrets and runtime JWTs).
 
 ## Production deploy

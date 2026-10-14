@@ -1,10 +1,4 @@
 {
-  "imports": {
-    "@supabase/functions-js": "jsr:@supabase/functions-js@^2.117.3",
-    "@supabase/supabase-js": "jsr:@supabase/supabase-js@^2.117.3",
-    "googleapis": "npm:googleapis@^185.0.0",
-    "tesseract.js": "npm:tesseract.js@^7.0.0"
-  },
   "compilerOptions": {
     "allowJs": true,
     "lib": ["deno.window"],

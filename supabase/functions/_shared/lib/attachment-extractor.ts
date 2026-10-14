@@ -348,21 +348,6 @@ async function downloadAttachment(
  * @param payload - The message payload (from messages.get with format=full)
  * @returns Array of extracted text strings from PDFs
  */
-export async function extractPdfTexts(
-  accessToken: string,
-  messageId: string,
-  payload: any,
-  options?: AttachmentRequestOptions
-): Promise<string[]> {
-  const result = await extractPdfDataForAiFallback(
-    accessToken,
-    messageId,
-    payload,
-    options
-  );
-  return result.texts;
-}
-
 export async function extractPdfDataForAiFallback(
   accessToken: string,
   messageId: string,

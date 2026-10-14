@@ -227,7 +227,6 @@ export function Metrics() {
             <CurrencyComparison
               key={periodKey}
               transactions={filteredTransactions}
-              selectedPeriod={periodKey}
               getCurrencySymbol={getCurrencySymbol}
               onCurrencySelect={setSelectedCurrency}
             />

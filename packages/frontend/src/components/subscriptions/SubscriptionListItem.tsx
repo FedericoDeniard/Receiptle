@@ -5,7 +5,7 @@ import { useFormatDate } from "../../hooks/useFormatDate";
 import type { SubscriptionCandidate } from "../../services/transactions.service";
 import { formatCurrency } from "../../utils/currency";
 import { getSubscriptionStatus } from "./subscriptionStatus";
-import { LazyMotion, m, domAnimation } from "framer-motion";
+import { LazyMotion, domAnimation } from "framer-motion";
 import { SubscriptionTransactionsList } from "./SubscriptionTransactionsList";
 
 interface SubscriptionListItemProps {

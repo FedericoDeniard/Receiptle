@@ -30,7 +30,7 @@
  *
  * Runner: `bun run test:usage-schema`.
  */
-import { assert, assertEquals } from "jsr:@std/assert";
+import { assert } from "jsr:@std/assert";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -46,15 +46,6 @@ function serviceClient(): SupabaseClient {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }
-
-const EXPECTED_CAPABILITIES = [
-  "gmail_sync",
-  "ai_assistant",
-  "push_notifications",
-  "advanced_reports",
-  "process_documents",
-  "report_pdf_export",
-];
 
 Deno.test({
   name: "usage-schema: usage_counters has expected columns",

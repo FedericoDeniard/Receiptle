@@ -1,14 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import {
-  Check,
-  ChevronDown,
-  Pencil,
-  Plus,
-  Tag as TagIcon,
-  Trash2,
-} from "lucide-react";
+import { Check, Pencil, Plus, Tag as TagIcon, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/Button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";

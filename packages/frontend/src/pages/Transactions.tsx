@@ -30,8 +30,6 @@ import { useReports } from "../hooks/useReports";
 import { useTransactionMutations } from "../hooks/useTransactionMutations";
 import { useGmailStatus } from "../hooks/useGmailStatus";
 import { Link, useSearchParams } from "react-router-dom";
-import { getSupabase } from "../lib/supabase";
-import { createTransactionsService } from "../services/transactions.service";
 import { toast } from "sonner";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { SuspenseFallback } from "../components/ui/SuspenseFallback";

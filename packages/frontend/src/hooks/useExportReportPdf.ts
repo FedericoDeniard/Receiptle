@@ -6,7 +6,7 @@ import { getEdgeFunctionErrorMessage } from "../utils/edge-function-errors";
 import { queryKeys } from "../lib/query-client";
 import { toast } from "sonner";
 
-export interface ExportReportPdfInput {
+interface ExportReportPdfInput {
   reportId: string;
   title: string;
   locale: "en" | "es";

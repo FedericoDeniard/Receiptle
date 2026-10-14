@@ -3,7 +3,7 @@ import { getSupabase } from "../lib/supabase";
 // Local row type that mirrors public.chat_attachments.
 // Will be replaced with `Tables<"chat_attachments">` once the migration is
 // applied and `bun docker:db:types` regenerates database.types.ts.
-export interface ChatAttachmentRow {
+interface ChatAttachmentRow {
   id: string;
   user_id: string;
   thread_id: string;
@@ -107,37 +107,6 @@ async function uploadChatAttachment(
     ...(row as unknown as ChatAttachmentRow),
     signedUrl: signed.signedUrl,
   };
-}
-
-/** Fetch a fresh signed URL for an existing attachment row. */
-async function getChatAttachment(
-  attachmentId: string
-): Promise<ChatAttachment> {
-  const supabase = await getSupabase();
-  const { data: row, error } = await supabase
-    .from("chat_attachments" as never)
-    .select("*")
-    .eq("id", attachmentId)
-    .single();
-
-  if (error || !row) {
-    throw new Error(
-      `Failed to load attachment: ${error?.message ?? "not found"}`
-    );
-  }
-
-  const typedRow = row as unknown as ChatAttachmentRow;
-  const { data: signed, error: signedError } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(typedRow.storage_path, SIGNED_URL_TTL_SECONDS);
-
-  if (signedError || !signed?.signedUrl) {
-    throw new Error(
-      `Failed to sign attachment URL: ${signedError?.message ?? "unknown error"}`
-    );
-  }
-
-  return { ...typedRow, signedUrl: signed.signedUrl };
 }
 
 /**

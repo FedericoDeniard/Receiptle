@@ -6,7 +6,6 @@ import { shouldProcessEmail } from "./guardrail.ts";
 import { EMAIL_EXTRACTION_SYSTEM } from "../prompts/email-extraction.ts";
 import { generateText, Output } from "npm:ai@7.0.138";
 import { createXai } from "npm:@ai-sdk/xai@5.0.21";
-import { z } from "npm:zod";
 import { traceOperation } from "../lib/langfuse.ts";
 import type {
   ImageAttachment,

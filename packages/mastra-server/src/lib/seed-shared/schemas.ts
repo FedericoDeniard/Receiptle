@@ -98,8 +98,6 @@ export const TransactionSchema = z.object({
     .describe("Category of the transaction"),
 });
 
-export type ExtractedTransaction = z.infer<typeof TransactionSchema>;
-
 export const TransactionResponseSchema = z.discriminatedUnion(
   "hasTransaction",
   [

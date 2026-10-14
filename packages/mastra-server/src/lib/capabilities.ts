@@ -13,7 +13,7 @@ import type { UserRole } from "./roles";
  * `supabase/migrations/20260705031217_add_user_capabilities_to_jwt.sql`
  * so this helper and the JWT claim agree on what counts as "active".
  */
-export const CAPABILITIES = {
+const CAPABILITIES = {
   gmail_sync: "gmail_sync",
   ai_assistant: "ai_assistant",
   push_notifications: "push_notifications",
@@ -21,12 +21,12 @@ export const CAPABILITIES = {
   report_pdf_export: "report_pdf_export",
 } as const;
 
-export type Capability = (typeof CAPABILITIES)[keyof typeof CAPABILITIES];
+type Capability = (typeof CAPABILITIES)[keyof typeof CAPABILITIES];
 
 /**
  * Type guard for runtime values (e.g. read from the JWT claim).
  */
-export function isCapability(x: unknown): x is Capability {
+function isCapability(x: unknown): x is Capability {
   return typeof x === "string" && x in CAPABILITIES;
 }
 
@@ -70,18 +70,18 @@ const ROLE_BYPASS: ReadonlySet<UserRole> = new Set<UserRole>([
  * DEFINER so it can read payments.user_capabilities_v (which is
  * revoked from authenticated) on behalf of the caller's JWT.
  */
-export interface CapabilityCheckOk {
+interface CapabilityCheckOk {
   allowed: true;
 }
 
-export interface CapabilityCheckDenied {
+interface CapabilityCheckDenied {
   allowed: false;
   missing: Capability;
 }
 
-export type CapabilityCheck = CapabilityCheckOk | CapabilityCheckDenied;
+type CapabilityCheck = CapabilityCheckOk | CapabilityCheckDenied;
 
-export interface RequireCapabilityContext {
+interface RequireCapabilityContext {
   userId: string;
   supabaseToken: string;
   role: UserRole;

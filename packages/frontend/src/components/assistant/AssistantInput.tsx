@@ -26,7 +26,7 @@ import type { ChatAttachment } from "../../services/chat-attachments.service";
 import { HistoryToggleButton } from "./HistoryToggleButton";
 import type { ChatStatus } from "ai";
 
-export interface AssistantInputHandle {
+interface AssistantInputHandle {
   threadId: string;
   text: string;
   files: Array<{

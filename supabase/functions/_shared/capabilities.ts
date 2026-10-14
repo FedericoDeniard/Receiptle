@@ -21,24 +21,8 @@ export const CAPABILITIES = {
 
 export type Capability = (typeof CAPABILITIES)[keyof typeof CAPABILITIES];
 
-// isCapability is re-exported below so existing imports from this module
-// keep working. The implementation lives in features.ts so all three
-// copies (edge, frontend, mastra) share the same check.
-
-/**
- * Statuses that grant entitlements. A user with a subscription in any of
- * these statuses keeps their capabilities until the status leaves the set
- * (e.g. via a webhook updating `cancelled` or `payment_failed`). Kept in
- * sync with the WHERE clause in
- * supabase/migrations/20260705031217_add_user_capabilities_to_jwt.sql so
- * the JWT hint and the security boundary agree on what counts as "active".
- */
-const ACTIVE_SUBSCRIPTION_STATUSES = [
-  "authorized",
-  "pending",
-  "paused",
-  "pending_cancellation",
-] as const;
+// isCapability lives in features.ts so all three copies (edge,
+// frontend, mastra) share the same check.
 
 /**
  * Roles that bypass capability gates entirely. Staff (`admin`) and
@@ -140,42 +124,3 @@ export async function requireCapability(
 
   return { user: ctx.user };
 }
-
-/**
- * Convenience helper for callers that want the set of capabilities
- * (e.g. to branch on multiple capabilities without gating). Returns
- * the deduplicated union of the user's active subscription grants and
- * the default grants, sourced from the same
- * `payments.user_capabilities` RPC as `requireCapability`.
- *
- * Role bypass: callers with `role: admin` or `role: tester` receive
- * the full CAPABILITIES enum (every capability), since they bypass the
- * subscription + default gate in `requireCapability` too. A tool that
- * branches on `hasCapability("advanced_reports")` keeps working for
- * staff even without a subscription row.
- */
-export async function getUserCapabilities(
-  userId: string,
-  role: UserRole
-): Promise<Capability[]> {
-  if (ROLE_BYPASS.has(role)) {
-    return Object.values(CAPABILITIES);
-  }
-
-  const { data, error } = await supabase
-    .schema("payments")
-    .rpc("user_capabilities", {
-      target_user_id: userId,
-    });
-
-  if (error) {
-    console.error("[getUserCapabilities] db error:", error);
-    return [];
-  }
-
-  return (data ?? []).filter(isCapability);
-}
-
-// isCapability is defined in features.ts and re-exported here so callers
-// of this module don't need to know about the split.
-export { isCapability };

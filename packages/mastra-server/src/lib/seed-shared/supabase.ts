@@ -28,14 +28,3 @@ export const supabase = new Proxy({} as SupabaseClient, {
     return Reflect.get(getServiceClient(), prop, receiver);
   },
 }) as SupabaseClient;
-
-export function createSupabaseClient(): SupabaseClient {
-  const url = process.env.SUPABASE_URL;
-  const anonKey = process.env.SUPABASE_ANON_KEY;
-  if (!url || !anonKey) {
-    throw new Error(
-      "SUPABASE_URL and SUPABASE_ANON_KEY must be set to create an anon client"
-    );
-  }
-  return createClient(url, anonKey);
-}

@@ -1,7 +1,6 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import { supabaseFromToken } from "../../lib/supabase-from-token";
-import { TRANSACTION_TYPE_VALUES } from "./constants";
 
 const PRESET_VALUES = [
   "this_month",

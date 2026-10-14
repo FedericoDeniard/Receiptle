@@ -14,7 +14,7 @@ import { Button } from "../ui/Button";
 import { ConfirmModal } from "../ui/ConfirmModal";
 import type { Report } from "../../types/reports";
 
-export interface ReportDetailStatus {
+interface ReportDetailStatus {
   updating: boolean;
   deleting: boolean;
   archiving: boolean;

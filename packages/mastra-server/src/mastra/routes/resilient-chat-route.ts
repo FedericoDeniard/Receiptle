@@ -1,7 +1,6 @@
 import type { Context } from "hono";
 import { handleChatStream } from "@mastra/ai-sdk";
 import { RequestContext } from "@mastra/core/request-context";
-import { randomUUID } from "node:crypto";
 import { requireCapability } from "../../lib/capabilities";
 import { withSseHeartbeats } from "../../lib/sse-heartbeat";
 import { mastra } from "../index";

@@ -200,10 +200,6 @@ export async function refreshAccessToken(
       ...(newRefreshEncrypted && {
         refresh_token_encrypted: newRefreshEncrypted,
       }),
-      // Always null the plaintext columns (defence in depth: even if a stale
-      // plaintext slipped through from before encryption, drop it on refresh).
-      access_token: null,
-      refresh_token: null,
       expires_at: newExpiresAt,
       is_active: true,
       last_refresh_at: now,

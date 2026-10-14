@@ -21,6 +21,7 @@
     "npm:ai@7.0.138": "7.0.138_zod@4.4.3",
     "npm:googleapis@185": "185.0.0",
     "npm:googleapis@185.0.0": "185.0.0",
+    "npm:jose@6.2.3": "6.2.3",
     "npm:openai@^4.52.5": "4.104.0_zod@4.4.3",
     "npm:string-strip-html@*": "13.7.7",
     "npm:tesseract.js@7": "7.0.0",
@@ -866,6 +867,9 @@
     },
     "is-fullwidth-code-point@3.0.0": {
       "integrity": "sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg=="
+    },
+    "jose@6.2.3": {
+      "integrity": "sha512-YYVDInQKFJfR/xa3ojUTl8c2KoTwiL1R5Wg9YCydwH0x0B9grbzlg5HC7mMjCtUJjbQ/YnGEZIhI5tCgfTb4Hw=="
     },
     "is-url@1.2.4": {
       "integrity": "sha512-ITvGim8FhRiYe4IQ5uHSkj7pVaPDrCTkNd3yq3cV7iZAcJdHTUMPMEHcqSOy9xZ9qFenQCvi+2wjH9a1nXqHww=="

@@ -25,21 +25,6 @@ export type Capability = (typeof CAPABILITIES)[keyof typeof CAPABILITIES];
 // frontend, mastra) share the same check.
 
 /**
- * Statuses that grant entitlements. A user with a subscription in any of
- * these statuses keeps their capabilities until the status leaves the set
- * (e.g. via a webhook updating `cancelled` or `payment_failed`). Kept in
- * sync with the WHERE clause in
- * supabase/migrations/20260705031217_add_user_capabilities_to_jwt.sql so
- * the JWT hint and the security boundary agree on what counts as "active".
- */
-const ACTIVE_SUBSCRIPTION_STATUSES = [
-  "authorized",
-  "pending",
-  "paused",
-  "pending_cancellation",
-] as const;
-
-/**
  * Roles that bypass capability gates entirely. Staff (`admin`) and
  * developers running the app as `tester` can exercise any gated feature
  * without holding an active subscription. The bypass short-circuits

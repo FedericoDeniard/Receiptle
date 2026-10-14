@@ -33,7 +33,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { requireUserAuth } from "../_shared/auth.ts";
 import { CAPABILITIES, requireCapability } from "../_shared/capabilities.ts";
 import { getCorsHeaders, handleCorsPreflightRequest } from "../_shared/cors.ts";
-import { buildReportPdf, type PdfLabel } from "../_shared/lib/report-pdf.ts";
+import { buildReportPdf } from "../_shared/lib/report-pdf.ts";
 import { supabase as serviceRoleSupabase } from "../_shared/lib/supabase.ts";
 
 // Per-capability usage counter name — matches the row inserted by the

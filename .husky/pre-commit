@@ -1,4 +1,12 @@
 #!/bin/sh
+# Git exports GIT_DIR (absolute, into .git/worktrees/<name>) and GIT_PREFIX
+# to hooks. Once this script cds into packages/frontend, a set GIT_DIR makes
+# git treat the cwd as the top of the working tree, so the `git add` below
+# records the frontend config files under root-relative index paths (e.g.
+# `tsconfig.json` instead of `packages/frontend/tsconfig.json`). Unsetting
+# both lets git rediscover the repository from the cwd.
+unset GIT_DIR GIT_PREFIX
+
 bunx lint-staged
 
 # React Doctor: block the commit if staged files introduce any

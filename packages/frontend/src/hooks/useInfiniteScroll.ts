@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
+import type { RefObject } from "react";
 
 interface UseInfiniteScrollOptions {
   onLoadMore: () => void;
@@ -12,14 +13,13 @@ export function useInfiniteScroll({
   hasMore,
   isLoading,
   threshold = 200,
-}: UseInfiniteScrollOptions): React.RefObject<HTMLDivElement> {
-  const observerRef = useRef<IntersectionObserver | null>(null);
+}: UseInfiniteScrollOptions): RefObject<HTMLDivElement | null> {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
-      const [target] = entries;
-      if (target.isIntersecting && hasMore && !isLoading) {
+      const target = entries[0];
+      if (target?.isIntersecting && hasMore && !isLoading) {
         onLoadMore();
       }
     },
@@ -27,23 +27,17 @@ export function useInfiniteScroll({
   );
 
   useEffect(() => {
-    const options = {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(handleObserver, {
       root: null,
       rootMargin: `${threshold}px`,
       threshold: 0.1,
-    };
+    });
+    observer.observe(sentinel);
 
-    observerRef.current = new IntersectionObserver(handleObserver, options);
-
-    if (sentinelRef.current) {
-      observerRef.current.observe(sentinelRef.current);
-    }
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
+    return () => observer.disconnect();
   }, [handleObserver, threshold]);
 
   return sentinelRef;

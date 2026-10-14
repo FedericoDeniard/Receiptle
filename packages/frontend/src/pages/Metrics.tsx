@@ -52,6 +52,143 @@ interface MonthlyData {
   net: number;
 }
 
+function resolveDisplayCurrency(
+  selectedCurrency: string,
+  transactions: { currency: string }[]
+): string {
+  if (selectedCurrency !== "all") return selectedCurrency;
+  return transactions[0]?.currency || "USD";
+}
+
+function ChartTypeButton({
+  active,
+  label,
+  title,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  label: string;
+  title: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      aria-pressed={active}
+      className={`p-1.5 rounded-md transition-colors ${
+        active
+          ? "bg-[var(--primary)] text-white shadow-sm"
+          : "text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]"
+      }`}
+      title={title}
+      type="button"
+    >
+      {children}
+    </button>
+  );
+}
+
+function TrendChartPanel({
+  chartType,
+  onChartTypeChange,
+  data,
+}: {
+  chartType: "bar" | "area";
+  onChartTypeChange: (type: "bar" | "area") => void;
+  data: MonthlyData[];
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="bg-[var(--bg-secondary)] p-6 rounded-2xl flex flex-col relative">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+          {t("metrics.monthlyTrend")}
+        </h2>
+        <div className="flex bg-[var(--bg-primary)] rounded-lg p-1 border border-[var(--text-secondary)]/10">
+          <ChartTypeButton
+            active={chartType === "bar"}
+            label={t("metrics.barChart", "Bar chart")}
+            title="Bar Chart"
+            onClick={() => onChartTypeChange("bar")}
+          >
+            <BarChart2 size={16} />
+          </ChartTypeButton>
+          <ChartTypeButton
+            active={chartType === "area"}
+            label={t("metrics.areaChart", "Area chart")}
+            title="Area Chart"
+            onClick={() => onChartTypeChange("area")}
+          >
+            <Activity size={16} />
+          </ChartTypeButton>
+        </div>
+      </div>
+      {chartType === "bar" ? (
+        <Suspense fallback={<LoadingSpinner />}>
+          <MonthlyTrendChart data={data} />
+        </Suspense>
+      ) : (
+        <Suspense fallback={<LoadingSpinner />}>
+          <MonthlyAreaChart data={data} />
+        </Suspense>
+      )}
+    </div>
+  );
+}
+
+function CategoryBreakdownPanel({
+  chartType,
+  onChartTypeChange,
+  data,
+}: {
+  chartType: "pie" | "treemap";
+  onChartTypeChange: (type: "pie" | "treemap") => void;
+  data: CategoryData[];
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="bg-[var(--bg-secondary)] p-6 rounded-2xl flex flex-col relative">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+          {t("metrics.categoryBreakdown")}
+        </h2>
+        <div className="flex bg-[var(--bg-primary)] rounded-lg p-1 border border-[var(--text-secondary)]/10">
+          <ChartTypeButton
+            active={chartType === "pie"}
+            label={t("metrics.pieChart", "Pie chart")}
+            title="Pie Chart"
+            onClick={() => onChartTypeChange("pie")}
+          >
+            <PieChartIcon size={16} />
+          </ChartTypeButton>
+          <ChartTypeButton
+            active={chartType === "treemap"}
+            label={t("metrics.treemapChart", "Treemap")}
+            title="Treemap"
+            onClick={() => onChartTypeChange("treemap")}
+          >
+            <LayoutGrid size={16} />
+          </ChartTypeButton>
+        </div>
+      </div>
+      {chartType === "pie" ? (
+        <Suspense fallback={<LoadingSpinner />}>
+          <CategoryPieChart data={data} />
+        </Suspense>
+      ) : (
+        <Suspense fallback={<LoadingSpinner />}>
+          <CategoryTreeMapChart data={data} />
+        </Suspense>
+      )}
+    </div>
+  );
+}
+
 export function Metrics() {
   const { t, i18n } = useTranslation();
   const [period, setPeriod] = useState<MetricPeriod>({
@@ -141,10 +278,10 @@ export function Metrics() {
       .sort((a, b) => b.amount - a.amount);
   }, [filteredTransactions, metrics.totalExpense]);
 
-  const displayCurrency =
-    selectedCurrency === "all"
-      ? filteredTransactions[0]?.currency || "USD"
-      : selectedCurrency;
+  const displayCurrency = resolveDisplayCurrency(
+    selectedCurrency,
+    filteredTransactions
+  );
 
   const metricCards: MetricCardProps[] = [
     {
@@ -152,28 +289,28 @@ export function Metrics() {
       value: `${getCurrencySymbol(displayCurrency)}${metrics.totalIncome.toFixed(2)}`,
       change: metrics.changes.income,
       icon: <TrendingUp className="size-5" />,
-      currency: selectedCurrency === "all" ? displayCurrency : selectedCurrency,
+      currency: displayCurrency,
     },
     {
       title: t("metrics.totalExpense"),
       value: `${getCurrencySymbol(displayCurrency)}${metrics.totalExpense.toFixed(2)}`,
       change: metrics.changes.expense,
       icon: <TrendingDown className="size-5" />,
-      currency: selectedCurrency === "all" ? displayCurrency : selectedCurrency,
+      currency: displayCurrency,
     },
     {
       title: t("metrics.netBalance"),
       value: `${getCurrencySymbol(displayCurrency)}${metrics.netBalance.toFixed(2)}`,
       change: metrics.changes.netBalance,
       icon: <DollarSign className="size-5" />,
-      currency: selectedCurrency === "all" ? displayCurrency : selectedCurrency,
+      currency: displayCurrency,
     },
     {
       title: t("metrics.averageTransaction"),
       value: `${getCurrencySymbol(displayCurrency)}${metrics.averageTransaction.toFixed(2)}`,
       change: metrics.changes.averageTransaction,
       icon: <CreditCard className="size-5" />,
-      currency: selectedCurrency === "all" ? displayCurrency : selectedCurrency,
+      currency: displayCurrency,
     },
   ];
 
@@ -248,82 +385,16 @@ export function Metrics() {
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <div className="bg-[var(--bg-secondary)] p-6 rounded-2xl flex flex-col relative">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-                    {t("metrics.monthlyTrend")}
-                  </h2>
-                  <div className="flex bg-[var(--bg-primary)] rounded-lg p-1 border border-[var(--text-secondary)]/10">
-                    <button
-                      onClick={() => setTrendChartType("bar")}
-                      aria-label={t("metrics.barChart", "Bar chart")}
-                      aria-pressed={trendChartType === "bar"}
-                      className={`p-1.5 rounded-md transition-colors ${trendChartType === "bar" ? "bg-[var(--primary)] text-white shadow-sm" : "text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]"}`}
-                      title="Bar Chart"
-                      type="button"
-                    >
-                      <BarChart2 size={16} />
-                    </button>
-                    <button
-                      onClick={() => setTrendChartType("area")}
-                      aria-label={t("metrics.areaChart", "Area chart")}
-                      aria-pressed={trendChartType === "area"}
-                      className={`p-1.5 rounded-md transition-colors ${trendChartType === "area" ? "bg-[var(--primary)] text-white shadow-sm" : "text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]"}`}
-                      title="Area Chart"
-                      type="button"
-                    >
-                      <Activity size={16} />
-                    </button>
-                  </div>
-                </div>
-                {trendChartType === "bar" ? (
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <MonthlyTrendChart data={monthlyData} />
-                  </Suspense>
-                ) : (
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <MonthlyAreaChart data={monthlyData} />
-                  </Suspense>
-                )}
-              </div>
-              <div className="bg-[var(--bg-secondary)] p-6 rounded-2xl flex flex-col relative">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-                    {t("metrics.categoryBreakdown")}
-                  </h2>
-                  <div className="flex bg-[var(--bg-primary)] rounded-lg p-1 border border-[var(--text-secondary)]/10">
-                    <button
-                      onClick={() => setBreakdownChartType("pie")}
-                      aria-label={t("metrics.pieChart", "Pie chart")}
-                      aria-pressed={breakdownChartType === "pie"}
-                      className={`p-1.5 rounded-md transition-colors ${breakdownChartType === "pie" ? "bg-[var(--primary)] text-white shadow-sm" : "text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]"}`}
-                      title="Pie Chart"
-                      type="button"
-                    >
-                      <PieChartIcon size={16} />
-                    </button>
-                    <button
-                      onClick={() => setBreakdownChartType("treemap")}
-                      aria-label={t("metrics.treemapChart", "Treemap")}
-                      aria-pressed={breakdownChartType === "treemap"}
-                      className={`p-1.5 rounded-md transition-colors ${breakdownChartType === "treemap" ? "bg-[var(--primary)] text-white shadow-sm" : "text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]"}`}
-                      title="Treemap"
-                      type="button"
-                    >
-                      <LayoutGrid size={16} />
-                    </button>
-                  </div>
-                </div>
-                {breakdownChartType === "pie" ? (
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <CategoryPieChart data={categoryData} />
-                  </Suspense>
-                ) : (
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <CategoryTreeMapChart data={categoryData} />
-                  </Suspense>
-                )}
-              </div>
+              <TrendChartPanel
+                chartType={trendChartType}
+                onChartTypeChange={setTrendChartType}
+                data={monthlyData}
+              />
+              <CategoryBreakdownPanel
+                chartType={breakdownChartType}
+                onChartTypeChange={setBreakdownChartType}
+                data={categoryData}
+              />
             </div>
 
             <InsightsSection

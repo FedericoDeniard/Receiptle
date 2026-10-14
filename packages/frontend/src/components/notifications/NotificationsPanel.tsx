@@ -80,6 +80,33 @@ function getImportanceConfig(importance: NotificationImportance) {
   }
 }
 
+function buildNotificationsQuery(filter: PanelFilter) {
+  return {
+    archived: false,
+    unread: filter === "unread",
+    muted: filter === "muted" ? true : undefined,
+    importance: filter === "important" ? ("high" as const) : undefined,
+    limit: 100,
+  };
+}
+
+function isAnyNotificationActionPending(
+  actions: ReturnType<typeof useNotificationActions>
+): boolean {
+  return (
+    actions.markAsRead.isPending ||
+    actions.markAsUnread.isPending ||
+    actions.archive.isPending ||
+    actions.mute.isPending ||
+    actions.setImportance.isPending ||
+    actions.remove.isPending
+  );
+}
+
+function isAllSelected(selectedCount: number, totalCount: number): boolean {
+  return selectedCount > 0 && selectedCount === totalCount;
+}
+
 function NotificationRow({
   item,
   isSelected,
@@ -91,7 +118,7 @@ function NotificationRow({
   onSelect: (checked: boolean) => void;
   onOpen: () => void;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const title = t(
     item.title_i18n_key,
     item.i18n_params as Record<string, unknown>
@@ -206,6 +233,179 @@ function NotificationRow({
   );
 }
 
+interface NotificationsToolbarProps {
+  filter: PanelFilter;
+  onFilterChange: (filter: PanelFilter) => void;
+  selectedCount: number;
+  totalCount: number;
+  isBusy: boolean;
+  onToggleSelectAll: () => void;
+  onMarkSelectedRead: () => void;
+  onArchiveSelected: () => void;
+  onDeleteSelected: () => void;
+}
+
+function NotificationsToolbar({
+  filter,
+  onFilterChange,
+  selectedCount,
+  totalCount,
+  isBusy,
+  onToggleSelectAll,
+  onMarkSelectedRead,
+  onArchiveSelected,
+  onDeleteSelected,
+}: NotificationsToolbarProps) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="min-h-[60px] border-b border-[var(--text-secondary)]/20 bg-[var(--bg-secondary)]/50 px-4 py-3 flex items-center justify-between">
+      <AnimatePresence mode="wait">
+        {selectedCount > 0 ? (
+          <m.div
+            key="actions"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="flex w-full items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                aria-label={t("notifications.selectAll")}
+                onClick={onToggleSelectAll}
+                className="group relative flex size-5 items-center justify-center rounded border-2 border-[var(--button-primary)] bg-[var(--button-primary)] transition-[color,background-color,border-color,box-shadow,opacity,transform]"
+              >
+                <CheckCheck size={14} className="text-white" strokeWidth={3} />
+              </button>
+              <span className="text-sm font-semibold text-[var(--text-primary)]">
+                {selectedCount} seleccionadas
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<MailOpen size={18} />}
+                className="!p-2"
+                title={t("notifications.actions.markRead")}
+                disabled={isBusy}
+                onClick={onMarkSelectedRead}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<Archive size={18} />}
+                className="!p-2"
+                title={t("notifications.actions.archive")}
+                disabled={isBusy}
+                onClick={onArchiveSelected}
+              />
+              <div className="h-4 w-px bg-[var(--text-secondary)]/20 mx-1" />
+              <Button
+                variant="danger"
+                size="sm"
+                icon={<Trash2 size={18} />}
+                className="!p-2"
+                title={t("notifications.actions.delete")}
+                disabled={isBusy}
+                onClick={onDeleteSelected}
+              />
+            </div>
+          </m.div>
+        ) : (
+          <m.div
+            key="filters"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.2 }}
+            className="flex w-full items-center gap-2"
+          >
+            <div className="flex gap-2 overflow-x-auto no-scrollbar">
+              {(["all", "unread", "muted", "important"] as const).map(value => (
+                <Button
+                  key={value}
+                  variant={filter === value ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => onFilterChange(value)}
+                  className="whitespace-nowrap"
+                >
+                  {t(`notifications.filters.${value}`)}
+                </Button>
+              ))}
+            </div>
+            {totalCount > 0 && (
+              <div className="shrink-0 ml-auto relative flex items-center justify-center">
+                <input
+                  type="checkbox"
+                  checked={false}
+                  onChange={onToggleSelectAll}
+                  className="size-5 cursor-pointer appearance-none rounded border border-[var(--text-secondary)]/30 hover:border-[var(--button-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--button-primary)]/30 focus:ring-offset-1 transition-[color,background-color,border-color,box-shadow,opacity,transform]"
+                  aria-label={t("notifications.actions.selectAll")}
+                />
+              </div>
+            )}
+          </m.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function NotificationsList({
+  isLoading,
+  notifications,
+  selectedSet,
+  onToggleSelect,
+  onOpenNotification,
+}: {
+  isLoading: boolean;
+  notifications: NotificationItem[];
+  selectedSet: Set<string>;
+  onToggleSelect: (item: NotificationItem, checked: boolean) => void;
+  onOpenNotification: (item: NotificationItem) => void;
+}) {
+  const { t } = useTranslation();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center text-[var(--text-secondary)] opacity-80">
+        <div className="size-8 animate-spin rounded-full border-4 border-[var(--text-secondary)]/20 border-t-[var(--button-primary)] mb-4" />
+        <p className="text-sm font-medium">{t("notifications.loading")}</p>
+      </div>
+    );
+  }
+
+  if (notifications.length === 0) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center -mt-8">
+        <EmptyState
+          icon={CheckSquare}
+          title="Todo al día"
+          description={t("notifications.empty")}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 pb-8">
+      {notifications.map(item => (
+        <NotificationRow
+          key={item.id}
+          item={item}
+          isSelected={selectedSet.has(item.id)}
+          onSelect={checked => onToggleSelect(item, checked)}
+          onOpen={() => onOpenNotification(item)}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function NotificationsPanel({
   isOpen,
   onClose,
@@ -222,27 +422,14 @@ export function NotificationsPanel({
     }
   }
 
-  const notificationsQuery = useNotifications({
-    archived: false,
-    unread: filter === "unread",
-    muted: filter === "muted" ? true : undefined,
-    importance: filter === "important" ? "high" : undefined,
-    limit: 100,
-  });
+  const notificationsQuery = useNotifications(buildNotificationsQuery(filter));
   const actions = useNotificationActions();
 
-  const isBusy =
-    actions.markAsRead.isPending ||
-    actions.markAsUnread.isPending ||
-    actions.archive.isPending ||
-    actions.mute.isPending ||
-    actions.setImportance.isPending ||
-    actions.remove.isPending;
+  const isBusy = isAnyNotificationActionPending(actions);
 
   const notifications = notificationsQuery.data ?? [];
   const selectedCount = selectedIds.length;
-  const allVisibleSelected =
-    selectedCount > 0 && selectedCount === notifications.length;
+  const allVisibleSelected = isAllSelected(selectedCount, notifications.length);
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
 
@@ -271,6 +458,22 @@ export function NotificationsPanel({
       onClose();
     }
   };
+
+  const toggleSelect = (item: NotificationItem, checked: boolean) => {
+    setSelectedIds(current => {
+      if (checked) return [...new Set([...current, item.id])];
+      return current.filter(id => id !== item.id);
+    });
+  };
+
+  const handleMarkSelectedRead = () =>
+    runAction(() => actions.markAsRead.mutateAsync({ ids: selectedIds }));
+
+  const handleArchiveSelected = () =>
+    runAction(() => actions.archive.mutateAsync({ ids: selectedIds }));
+
+  const handleDeleteSelected = () =>
+    runAction(() => actions.remove.mutateAsync({ ids: selectedIds }));
 
   return (
     <AnimatePresence>
@@ -317,161 +520,27 @@ export function NotificationsPanel({
                 </div>
 
                 {/* Dynamic Toolbar (Filters or Actions) */}
-                <div className="min-h-[60px] border-b border-[var(--text-secondary)]/20 bg-[var(--bg-secondary)]/50 px-4 py-3 flex items-center justify-between">
-                  <AnimatePresence mode="wait">
-                    {selectedCount > 0 ? (
-                      <m.div
-                        key="actions"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                        className="flex w-full items-center justify-between"
-                      >
-                        <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            aria-label={t("notifications.selectAll")}
-                            onClick={toggleSelectAll}
-                            className="group relative flex size-5 items-center justify-center rounded border-2 border-[var(--button-primary)] bg-[var(--button-primary)] transition-[color,background-color,border-color,box-shadow,opacity,transform]"
-                          >
-                            <CheckCheck
-                              size={14}
-                              className="text-white"
-                              strokeWidth={3}
-                            />
-                          </button>
-                          <span className="text-sm font-semibold text-[var(--text-primary)]">
-                            {selectedCount} seleccionadas
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            icon={<MailOpen size={18} />}
-                            className="!p-2"
-                            title={t("notifications.actions.markRead")}
-                            disabled={isBusy}
-                            onClick={() =>
-                              runAction(() =>
-                                actions.markAsRead.mutateAsync({
-                                  ids: selectedIds,
-                                })
-                              )
-                            }
-                          />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            icon={<Archive size={18} />}
-                            className="!p-2"
-                            title={t("notifications.actions.archive")}
-                            disabled={isBusy}
-                            onClick={() =>
-                              runAction(() =>
-                                actions.archive.mutateAsync({
-                                  ids: selectedIds,
-                                })
-                              )
-                            }
-                          />
-                          <div className="h-4 w-px bg-[var(--text-secondary)]/20 mx-1" />
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            icon={<Trash2 size={18} />}
-                            className="!p-2"
-                            title={t("notifications.actions.delete")}
-                            disabled={isBusy}
-                            onClick={() =>
-                              runAction(() =>
-                                actions.remove.mutateAsync({ ids: selectedIds })
-                              )
-                            }
-                          />
-                        </div>
-                      </m.div>
-                    ) : (
-                      <m.div
-                        key="filters"
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        transition={{ duration: 0.2 }}
-                        className="flex w-full items-center gap-2"
-                      >
-                        <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                          {(
-                            ["all", "unread", "muted", "important"] as const
-                          ).map(value => {
-                            const isActive = filter === value;
-                            return (
-                              <Button
-                                key={value}
-                                variant={isActive ? "primary" : "secondary"}
-                                size="sm"
-                                onClick={() => setFilter(value)}
-                                className="whitespace-nowrap"
-                              >
-                                {t(`notifications.filters.${value}`)}
-                              </Button>
-                            );
-                          })}
-                        </div>
-                        {notifications.length > 0 && (
-                          <div className="shrink-0 ml-auto relative flex items-center justify-center">
-                            <input
-                              type="checkbox"
-                              checked={false}
-                              onChange={toggleSelectAll}
-                              className="size-5 cursor-pointer appearance-none rounded border border-[var(--text-secondary)]/30 hover:border-[var(--button-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--button-primary)]/30 focus:ring-offset-1 transition-[color,background-color,border-color,box-shadow,opacity,transform]"
-                              aria-label={t("notifications.actions.selectAll")}
-                            />
-                          </div>
-                        )}
-                      </m.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                <NotificationsToolbar
+                  filter={filter}
+                  onFilterChange={setFilter}
+                  selectedCount={selectedCount}
+                  totalCount={notifications.length}
+                  isBusy={isBusy}
+                  onToggleSelectAll={toggleSelectAll}
+                  onMarkSelectedRead={handleMarkSelectedRead}
+                  onArchiveSelected={handleArchiveSelected}
+                  onDeleteSelected={handleDeleteSelected}
+                />
 
                 {/* Lista de Notificaciones */}
                 <div className="flex-1 overflow-y-auto p-4 bg-[var(--bg-primary)] space-y-2 relative">
-                  {notificationsQuery.isLoading ? (
-                    <div className="flex h-full flex-col items-center justify-center text-[var(--text-secondary)] opacity-80">
-                      <div className="size-8 animate-spin rounded-full border-4 border-[var(--text-secondary)]/20 border-t-[var(--button-primary)] mb-4" />
-                      <p className="text-sm font-medium">
-                        {t("notifications.loading")}
-                      </p>
-                    </div>
-                  ) : notifications.length === 0 ? (
-                    <div className="flex h-full flex-col items-center justify-center -mt-8">
-                      <EmptyState
-                        icon={CheckSquare}
-                        title="Todo al día"
-                        description={t("notifications.empty")}
-                      />
-                    </div>
-                  ) : (
-                    <div className="space-y-3 pb-8">
-                      {notifications.map(item => (
-                        <NotificationRow
-                          key={item.id}
-                          item={item}
-                          isSelected={selectedSet.has(item.id)}
-                          onSelect={checked => {
-                            setSelectedIds(current => {
-                              if (checked)
-                                return [...new Set([...current, item.id])];
-                              return current.filter(id => id !== item.id);
-                            });
-                          }}
-                          onOpen={() => openNotification(item)}
-                        />
-                      ))}
-                    </div>
-                  )}
+                  <NotificationsList
+                    isLoading={notificationsQuery.isLoading}
+                    notifications={notifications}
+                    selectedSet={selectedSet}
+                    onToggleSelect={toggleSelect}
+                    onOpenNotification={openNotification}
+                  />
                 </div>
               </div>
             </m.aside>

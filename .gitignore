@@ -57,3 +57,5 @@ bruno/**/environments.bru
 
 # PWA icons are excluded from the above *.png rule
 !packages/frontend/public/*.png
+# Guardrail image fixtures are excluded from the test-assets rules
+!supabase/functions/_shared/ai/fixtures/images/*.jpg

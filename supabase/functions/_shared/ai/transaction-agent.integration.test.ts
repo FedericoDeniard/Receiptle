@@ -3,6 +3,7 @@ import { TransactionSchema, type TransactionResponse } from "./schemas.ts";
 import { extractTransactionFromEmail } from "./transaction-agent.ts";
 import { shouldProcessEmail } from "./guardrail.ts";
 import { transactionAgentCases } from "./fixtures/transaction-agent-cases.ts";
+import { guardrailNegativeCases } from "./fixtures/guardrail-cases.ts";
 
 function assertPositiveResponse(
   result: TransactionResponse,
@@ -153,50 +154,9 @@ Deno.test({
   sanitizeOps: false,
   sanitizeResources: false,
   fn: async t => {
-    const nonTransactionalEmails = [
-      {
-        name: "social media notification",
-        content: `Hi John,
-
-Sarah liked your photo on Instagram.
-
-Check out what other people are saying about your post.
-
-View activity: https://instagram.com/p/abc123
-
-— The Instagram Team`,
-      },
-      {
-        name: "marketing newsletter",
-        content: `Subject: Summer Sale - Up to 50% Off!
-
-Hey there!
-
-Don't miss our biggest sale of the year. Get up to 50% off on selected items.
-
-Shop now: https://shop.example.com/sale
-
-Unsubscribe: https://shop.example.com/unsubscribe`,
-      },
-      {
-        name: "password reset email",
-        content: `Hello,
-
-We received a request to reset your password for your account.
-
-Click the link below to reset your password:
-https://example.com/reset-password?token=abc123xyz
-
-If you didn't request this, please ignore this email.
-
-Thanks,
-The Example Team`,
-      },
-    ];
-
-    for (const testCase of nonTransactionalEmails) {
+    for (const testCase of guardrailNegativeCases) {
       await t.step(testCase.name, async () => {
-        const result = await shouldProcessEmail(testCase.content, false);
+        const result = await shouldProcessEmail(testCase.emailContent, false);
         assertEquals(
           result.shouldProcess,
           false,

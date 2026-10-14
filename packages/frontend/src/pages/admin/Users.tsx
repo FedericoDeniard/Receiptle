@@ -9,6 +9,7 @@ import { PageHeader } from "../../components/admin/PageHeader";
 import { RoleBadge } from "../../components/admin/RoleBadge";
 import { UserIdCopy } from "../../components/admin/UserIdCopy";
 import { useAdminUsers, useAdminUsersCount } from "../../hooks/useAdminUsers";
+import { adminTableFeatures } from "../../lib/admin-table-features";
 import { AdminInput } from "../../components/admin/AdminInput";
 import type { AdminUserRow } from "../../services/admin.service";
 import { formatDateSafe } from "../../utils/format";
@@ -28,48 +29,49 @@ export function Users() {
   });
   const totalQuery = useAdminUsersCount(debouncedSearch || undefined);
 
-  const columns: ColumnDef<AdminUserRow>[] = [
-    {
-      id: "email",
-      accessorKey: "email",
-      header: () => t("admin.users.columns.email"),
-      cell: ({ row }) => (
-        <div className="flex flex-col gap-0.5">
-          <span className="font-medium text-[var(--text-primary)]">
-            {row.original.email ?? "—"}
-          </span>
-          <UserIdCopy userId={row.original.user_id} compact />
-        </div>
-      ),
-    },
-    {
-      id: "name",
-      accessorKey: "name",
-      header: () => t("admin.users.columns.name"),
-      cell: ({ row }) => row.original.name ?? "—",
-    },
-    {
-      id: "role",
-      accessorKey: "role",
-      header: () => t("admin.users.columns.role"),
-      cell: ({ row }) => <RoleBadge role={row.original.role} />,
-    },
-    {
-      id: "plan",
-      accessorKey: "active_plan_key",
-      header: () => t("admin.users.columns.plan"),
-      cell: ({ row }) => row.original.active_plan_key ?? "—",
-    },
-    {
-      id: "created",
-      accessorKey: "created_at",
-      header: () => t("admin.users.columns.createdAt"),
-      cell: ({ row }) =>
-        row.original.created_at
-          ? formatDateSafe(row.original.created_at, i18n.language)
-          : "—",
-    },
-  ];
+  const columns: ColumnDef<typeof adminTableFeatures, AdminUserRow, unknown>[] =
+    [
+      {
+        id: "email",
+        accessorKey: "email",
+        header: () => t("admin.users.columns.email"),
+        cell: ({ row }) => (
+          <div className="flex flex-col gap-0.5">
+            <span className="font-medium text-[var(--text-primary)]">
+              {row.original.email ?? "—"}
+            </span>
+            <UserIdCopy userId={row.original.user_id} compact />
+          </div>
+        ),
+      },
+      {
+        id: "name",
+        accessorKey: "name",
+        header: () => t("admin.users.columns.name"),
+        cell: ({ row }) => row.original.name ?? "—",
+      },
+      {
+        id: "role",
+        accessorKey: "role",
+        header: () => t("admin.users.columns.role"),
+        cell: ({ row }) => <RoleBadge role={row.original.role} />,
+      },
+      {
+        id: "plan",
+        accessorKey: "active_plan_key",
+        header: () => t("admin.users.columns.plan"),
+        cell: ({ row }) => row.original.active_plan_key ?? "—",
+      },
+      {
+        id: "created",
+        accessorKey: "created_at",
+        header: () => t("admin.users.columns.createdAt"),
+        cell: ({ row }) =>
+          row.original.created_at
+            ? formatDateSafe(row.original.created_at, i18n.language)
+            : "—",
+      },
+    ];
 
   return (
     <AdminShell>

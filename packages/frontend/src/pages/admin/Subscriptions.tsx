@@ -11,6 +11,7 @@ import {
   useAdminSubscriptionsCount,
 } from "../../hooks/useAdminSubscriptions";
 import { useAdminCancelSubscription } from "../../hooks/useAdminCancelSubscription";
+import { adminTableFeatures } from "../../lib/admin-table-features";
 import { AdminSelect } from "../../components/admin/AdminSelect";
 import { Button } from "../../components/ui/Button";
 import type { AdminSubscriptionRow } from "../../services/admin.service";
@@ -42,7 +43,11 @@ export function Subscriptions() {
 
   const cancel = useAdminCancelSubscription();
 
-  const columns: ColumnDef<AdminSubscriptionRow>[] = [
+  const columns: ColumnDef<
+    typeof adminTableFeatures,
+    AdminSubscriptionRow,
+    unknown
+  >[] = [
     {
       id: "user",
       accessorFn: row => row.user_email ?? row.user_id ?? "",

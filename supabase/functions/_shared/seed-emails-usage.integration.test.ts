@@ -89,6 +89,19 @@ async function setUsageLimit(
   // for role-scoped overrides. The PK (capability, role, period)
   // guarantees uniqueness; typos in the role literal are rejected
   // by the enum (no more "Tester"/"testr" silently accepted).
+  //
+  // Read the current value first: the seed ships a gmail_sync row for
+  // role:tester, and the cleanup must put it back rather than delete it
+  // (usage-schema asserts on the seeded row).
+  const { data: prior } = await supabase
+    .schema("payments")
+    .from("usage_limits_role")
+    .select("max_count")
+    .eq("capability", "gmail_sync")
+    .eq("role", role)
+    .eq("period", "month")
+    .maybeSingle();
+
   const { error } = await supabase
     .schema("payments")
     .from("usage_limits_role")
@@ -107,6 +120,18 @@ async function setUsageLimit(
     );
   }
   return async () => {
+    if (prior) {
+      await supabase.schema("payments").from("usage_limits_role").upsert(
+        {
+          capability: "gmail_sync",
+          role,
+          period: "month",
+          max_count: prior.max_count,
+        },
+        { onConflict: "capability,role,period" }
+      );
+      return;
+    }
     await supabase
       .schema("payments")
       .from("usage_limits_role")

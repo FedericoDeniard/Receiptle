@@ -4,6 +4,7 @@ import {
   useTable,
   type ColumnDef,
   type Row,
+  type RowData,
   type SortingState,
 } from "@tanstack/react-table";
 import {
@@ -15,7 +16,7 @@ import {
 } from "lucide-react";
 import { adminTableFeatures } from "../../lib/admin-table-features";
 
-interface AdminDataTableProps<TRow> {
+interface AdminDataTableProps<TRow extends RowData> {
   /** TanStack column definitions. Each column needs an accessorKey
    *  (or accessorFn) so sorting can read the raw value. */
   columns: ColumnDef<typeof adminTableFeatures, TRow, unknown>[];
@@ -48,7 +49,7 @@ interface AdminDataTableProps<TRow> {
  * is always visible. Per-column `enableSorting: false` (used by the
  * action button column on most pages) opts out.
  */
-export function AdminDataTable<TRow>({
+export function AdminDataTable<TRow extends RowData>({
   columns,
   rows,
   loading,
@@ -206,11 +207,11 @@ function SortIcon({ dir }: { dir: false | "asc" | "desc" }) {
   return <ChevronsUpDown size={12} aria-hidden="true" className="opacity-40" />;
 }
 
-function RowEl<TRow>({
+function RowEl<TRow extends RowData>({
   row,
   onClick,
 }: {
-  row: Row<TRow>;
+  row: Row<typeof adminTableFeatures, TRow>;
   onClick?: () => void;
 }) {
   return (
@@ -234,7 +235,9 @@ function RowEl<TRow>({
           : undefined
       }
     >
-      {row.getVisibleCells().map(cell => (
+      {/* v9: rows expose getVisibleCells only when columnVisibilityFeature is
+          registered (not in adminTableFeatures) — getAllCells is the core API. */}
+      {row.getAllCells().map(cell => (
         <td key={cell.id} className="px-4 py-3">
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </td>

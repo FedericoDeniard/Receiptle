@@ -12,6 +12,7 @@ import { UserIdCopy } from "../../components/admin/UserIdCopy";
 import { useAdminUserDetail } from "../../hooks/useAdminUserDetail";
 import { useAdminSetUserRole } from "../../hooks/useAdminSetUserRole";
 import { useAdminUserUsageSummary } from "../../hooks/useAdminUserUsageSummary";
+import { adminTableFeatures } from "../../lib/admin-table-features";
 import { AdminSelect } from "../../components/admin/AdminSelect";
 import { Button } from "../../components/ui/Button";
 import type {
@@ -22,7 +23,11 @@ import { formatDateSafe } from "../../utils/format";
 
 const ROLES: AppRole[] = ["user", "tester", "admin"];
 
-const usageColumns: ColumnDef<AdminUserUsageSummaryRow>[] = [
+const usageColumns: ColumnDef<
+  typeof adminTableFeatures,
+  AdminUserUsageSummaryRow,
+  unknown
+>[] = [
   {
     id: "capability",
     accessorKey: "capability",

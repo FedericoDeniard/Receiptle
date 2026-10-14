@@ -1,6 +1,7 @@
 import pdfParse from "npm:pdf-parse@2.4.5";
-import { google } from "npm:googleapis@173.0.0";
-import type { Gmail } from "npm:googleapis@173.0.0";
+import { google, type gmail_v1 } from "npm:googleapis@185.0.0";
+
+type Gmail = gmail_v1.Gmail;
 
 const MAX_PDF_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 const MAX_PDFS_PER_EMAIL = 3;

@@ -1,9 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import {
   flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
+  useTable,
   type ColumnDef,
   type Row,
   type SortingState,
@@ -15,11 +13,12 @@ import {
   ChevronUp,
   ChevronsUpDown,
 } from "lucide-react";
+import { adminTableFeatures } from "../../lib/admin-table-features";
 
 interface AdminDataTableProps<TRow> {
   /** TanStack column definitions. Each column needs an accessorKey
    *  (or accessorFn) so sorting can read the raw value. */
-  columns: ColumnDef<TRow, unknown>[];
+  columns: ColumnDef<typeof adminTableFeatures, TRow, unknown>[];
   /** Rows to render. */
   rows: TRow[];
   /** Initial loading state. Shows skeleton when true and no rows. */
@@ -63,13 +62,12 @@ export function AdminDataTable<TRow>({
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  const table = useReactTable<TRow>({
+  const table = useTable<typeof adminTableFeatures, TRow>({
+    features: adminTableFeatures,
     data: rows,
     columns,
     state: { sorting },
     onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     getRowId: row => rowKey(row),
   });
 

@@ -8,6 +8,7 @@ import { ScopeBadge } from "../../components/admin/ScopeBadge";
 import { useAdminUsageLimits } from "../../hooks/useAdminUsageLimits";
 import { useAdminUserUsageSummary } from "../../hooks/useAdminUserUsageSummary";
 import { useAdminTopConsumers } from "../../hooks/useAdminTopConsumers";
+import { adminTableFeatures } from "../../lib/admin-table-features";
 import { AdminInput } from "../../components/admin/AdminInput";
 import { AdminSelect } from "../../components/admin/AdminSelect";
 import type {
@@ -53,7 +54,11 @@ export function UsageLimits() {
   const userSummary = userSummaryQuery.data ?? [];
   const topConsumers = topConsumersQuery.data ?? [];
 
-  const limitsColumns: ColumnDef<AdminUsageLimitRow>[] = [
+  const limitsColumns: ColumnDef<
+    typeof adminTableFeatures,
+    AdminUsageLimitRow,
+    unknown
+  >[] = [
     {
       id: "capability",
       accessorKey: "capability",
@@ -91,7 +96,11 @@ export function UsageLimits() {
     },
   ];
 
-  const topConsumersColumns: ColumnDef<AdminTopConsumerRow>[] = [
+  const topConsumersColumns: ColumnDef<
+    typeof adminTableFeatures,
+    AdminTopConsumerRow,
+    unknown
+  >[] = [
     {
       id: "user",
       accessorFn: row => row.user_email ?? row.user_id,
@@ -106,7 +115,11 @@ export function UsageLimits() {
     },
   ];
 
-  const userSummaryColumns: ColumnDef<AdminUserUsageSummaryRow>[] = [
+  const userSummaryColumns: ColumnDef<
+    typeof adminTableFeatures,
+    AdminUserUsageSummaryRow,
+    unknown
+  >[] = [
     {
       id: "capability",
       accessorKey: "capability",

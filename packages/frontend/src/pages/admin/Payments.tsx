@@ -9,6 +9,7 @@ import {
   useAdminPaymentEvents,
   useAdminPaymentEventsCount,
 } from "../../hooks/useAdminPaymentEvents";
+import { adminTableFeatures } from "../../lib/admin-table-features";
 import type { AdminPaymentEventRow } from "../../services/admin.service";
 import { formatDateSafe } from "../../utils/format";
 
@@ -20,7 +21,11 @@ export function Payments() {
   const eventsQuery = useAdminPaymentEvents({ page, pageSize });
   const totalQuery = useAdminPaymentEventsCount();
 
-  const columns: ColumnDef<AdminPaymentEventRow>[] = [
+  const columns: ColumnDef<
+    typeof adminTableFeatures,
+    AdminPaymentEventRow,
+    unknown
+  >[] = [
     {
       id: "received",
       accessorKey: "received_at",

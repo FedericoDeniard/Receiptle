@@ -110,7 +110,6 @@ export async function traceOperation<T>(
   input?: unknown
 ): Promise<T> {
   getProcessor();
-  const operationStartTime = new Date();
 
   const traceInput = buildTraceInput(input);
   const generationInput = buildGenerationInput(input);
@@ -125,6 +124,9 @@ export async function traceOperation<T>(
           typeof result === "object" ? JSON.stringify(result) : String(result);
         const usageDetails = buildUsageDetails(result);
 
+        // Do not pass a Date as `startTime`: the Deno edge runtime's built-in
+        // OTel tracer forwards it to a Rust op that expects f64 seconds and
+        // throws `TypeError: expected f64`, failing the whole extraction.
         const generation = startObservation(
           "ai-completion",
           {
@@ -133,7 +135,7 @@ export async function traceOperation<T>(
             output: serializedOutput,
             ...(usageDetails ? { usageDetails } : {}),
           },
-          { asType: "generation", startTime: operationStartTime }
+          { asType: "generation" }
         );
         generation.end();
 

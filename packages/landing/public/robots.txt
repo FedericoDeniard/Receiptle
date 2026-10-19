@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# App routes hold no indexable content (auth-gated SPA).
+Disallow: /dashboard
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /auth/
+Disallow: /settings
+Disallow: /transactions
+Disallow: /subscriptions
+Disallow: /metrics
+Disallow: /reports
+Disallow: /assistant
+Disallow: /account/
+Disallow: /admin/
+
+Sitemap: https://receiptle.com/sitemap.xml

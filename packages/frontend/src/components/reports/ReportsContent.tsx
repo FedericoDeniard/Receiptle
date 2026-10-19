@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { ReportList } from "./ReportList";
 import { EmptyReportsState } from "./EmptyReportsState";
 import { useReports } from "../../hooks/useReports";
-import { SuspenseFallback } from "../ui/SuspenseFallback";
+import { ReportsSkeleton } from "./ReportsSkeleton";
 import type { ReportStatus } from "../../types/reports";
 
 interface ReportsContentProps {
@@ -15,7 +15,7 @@ export function ReportsContent({ status, onCreate }: ReportsContentProps) {
   const { data, isLoading } = useReports(status);
 
   if (isLoading) {
-    return <SuspenseFallback rows={3} />;
+    return <ReportsSkeleton />;
   }
 
   if (status === "archived") {

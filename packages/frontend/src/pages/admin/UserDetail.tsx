@@ -8,6 +8,7 @@ import { RoleBadge } from "../../components/admin/RoleBadge";
 import { StatusBadge } from "../../components/admin/StatusBadge";
 import { ScopeBadge } from "../../components/admin/ScopeBadge";
 import { AdminDataTable } from "../../components/admin/AdminDataTable";
+import { AdminDetailSkeleton } from "../../components/admin/AdminDetailSkeleton";
 import { UserIdCopy } from "../../components/admin/UserIdCopy";
 import { useAdminUserDetail } from "../../hooks/useAdminUserDetail";
 import { useAdminSetUserRole } from "../../hooks/useAdminSetUserRole";
@@ -79,7 +80,7 @@ export function UserDetail() {
   if (detailQuery.isLoading) {
     return (
       <AdminShell>
-        <div className="text-sm text-[var(--text-secondary)]">Loading…</div>
+        <AdminDetailSkeleton />
       </AdminShell>
     );
   }

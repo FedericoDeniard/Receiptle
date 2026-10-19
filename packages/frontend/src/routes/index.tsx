@@ -3,7 +3,20 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useConfig } from "../hooks/useConfig";
 import { ErrorBoundary } from "../components/ui/ErrorBoundary";
-import { SuspenseFallbackPage } from "../components/ui/SuspenseFallback";
+import {
+  SuspenseFallback,
+  SuspenseFallbackPage,
+} from "../components/ui/SuspenseFallback";
+import { AppShellSkeleton } from "../components/layout/AppShellSkeleton";
+import { DashboardSkeleton } from "../components/dashboard/DashboardSkeleton";
+import { TransactionsSkeleton } from "../components/transactions/TransactionsSkeleton";
+import { MetricsSkeleton } from "../components/metrics/MetricsSkeleton";
+import { SubscriptionsSkeleton } from "../components/subscriptions/SubscriptionsSkeleton";
+import { ReportsSkeleton } from "../components/reports/ReportsSkeleton";
+import { ReportDetailSkeleton } from "../components/reports/ReportDetailSkeleton";
+import { AssistantSkeleton } from "../components/assistant/AssistantSkeleton";
+import { AccountBillingSkeleton } from "../components/account-billing/AccountBillingSkeleton";
+import { AdminDetailSkeleton } from "../components/admin/AdminDetailSkeleton";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 
 // Lazy-loaded pages — each page is a separate JS chunk
@@ -88,15 +101,14 @@ const AdminUsageLimits = lazy(() =>
   import("../pages/admin/UsageLimits").then(m => ({ default: m.UsageLimits }))
 );
 
-const chunkFallback = <SuspenseFallbackPage />;
+const standaloneChunkFallback = <SuspenseFallbackPage />;
+const layoutChunkFallback = <SuspenseFallback rows={4} />;
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-dvh flex items-center justify-center">Loading…</div>
-    );
+    return <AppShellSkeleton />;
   }
 
   if (!user) {
@@ -110,9 +122,7 @@ function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-dvh flex items-center justify-center">Loading…</div>
-    );
+    return <SuspenseFallbackPage />;
   }
 
   if (user) {
@@ -134,9 +144,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, role } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-dvh flex items-center justify-center">Loading…</div>
-    );
+    return <AppShellSkeleton />;
   }
 
   if (!user) {
@@ -163,7 +171,7 @@ export function AppRoutes() {
           path="/login"
           element={
             <PublicOnlyRoute>
-              <Suspense fallback={chunkFallback}>
+              <Suspense fallback={standaloneChunkFallback}>
                 <Login />
               </Suspense>
             </PublicOnlyRoute>
@@ -173,7 +181,7 @@ export function AppRoutes() {
           path="/register"
           element={
             <PublicOnlyRoute>
-              <Suspense fallback={chunkFallback}>
+              <Suspense fallback={standaloneChunkFallback}>
                 <Register />
               </Suspense>
             </PublicOnlyRoute>
@@ -183,7 +191,7 @@ export function AppRoutes() {
           path="/forgot-password"
           element={
             <PublicOnlyRoute>
-              <Suspense fallback={chunkFallback}>
+              <Suspense fallback={standaloneChunkFallback}>
                 <ForgotPassword />
               </Suspense>
             </PublicOnlyRoute>
@@ -192,7 +200,7 @@ export function AppRoutes() {
         <Route
           path="/reset-password"
           element={
-            <Suspense fallback={chunkFallback}>
+            <Suspense fallback={standaloneChunkFallback}>
               <ResetPassword />
             </Suspense>
           }
@@ -200,7 +208,7 @@ export function AppRoutes() {
         <Route
           path="/auth/callback"
           element={
-            <Suspense fallback={chunkFallback}>
+            <Suspense fallback={standaloneChunkFallback}>
               <AuthCallback />
             </Suspense>
           }
@@ -209,7 +217,7 @@ export function AppRoutes() {
           path="/"
           element={
             <PublicOnlyRoute>
-              <Suspense fallback={chunkFallback}>
+              <Suspense fallback={standaloneChunkFallback}>
                 <LandingPage />
               </Suspense>
             </PublicOnlyRoute>
@@ -218,7 +226,7 @@ export function AppRoutes() {
         <Route
           path="/privacy"
           element={
-            <Suspense fallback={chunkFallback}>
+            <Suspense fallback={standaloneChunkFallback}>
               <PrivacyPolicy />
             </Suspense>
           }
@@ -236,7 +244,7 @@ export function AppRoutes() {
           <Route
             path="/dashboard"
             element={
-              <Suspense fallback={chunkFallback}>
+              <Suspense fallback={<DashboardSkeleton />}>
                 <Home />
               </Suspense>
             }
@@ -244,7 +252,7 @@ export function AppRoutes() {
           <Route
             path="/settings"
             element={
-              <Suspense fallback={chunkFallback}>
+              <Suspense fallback={layoutChunkFallback}>
                 <Settings />
               </Suspense>
             }
@@ -252,7 +260,7 @@ export function AppRoutes() {
           <Route
             path="/transactions"
             element={
-              <Suspense fallback={chunkFallback}>
+              <Suspense fallback={<TransactionsSkeleton />}>
                 <Transactions />
               </Suspense>
             }
@@ -260,7 +268,7 @@ export function AppRoutes() {
           <Route
             path="/subscriptions"
             element={
-              <Suspense fallback={chunkFallback}>
+              <Suspense fallback={<SubscriptionsSkeleton viewMode="grid" />}>
                 <Subscriptions />
               </Suspense>
             }
@@ -272,7 +280,7 @@ export function AppRoutes() {
           <Route
             path="/metrics"
             element={
-              <Suspense fallback={chunkFallback}>
+              <Suspense fallback={<MetricsSkeleton />}>
                 <Metrics />
               </Suspense>
             }
@@ -281,7 +289,7 @@ export function AppRoutes() {
             path="/assistant"
             element={
               isChatEnabled ? (
-                <Suspense fallback={chunkFallback}>
+                <Suspense fallback={<AssistantSkeleton />}>
                   <Assistant />
                 </Suspense>
               ) : (
@@ -293,7 +301,7 @@ export function AppRoutes() {
             path="/assistant/:threadId"
             element={
               isChatEnabled ? (
-                <Suspense fallback={chunkFallback}>
+                <Suspense fallback={<AssistantSkeleton />}>
                   <Assistant />
                 </Suspense>
               ) : (
@@ -304,7 +312,7 @@ export function AppRoutes() {
           <Route
             path="/account/billing"
             element={
-              <Suspense fallback={chunkFallback}>
+              <Suspense fallback={<AccountBillingSkeleton />}>
                 <AccountBilling />
               </Suspense>
             }
@@ -312,7 +320,7 @@ export function AppRoutes() {
           <Route
             path="/reports"
             element={
-              <Suspense fallback={chunkFallback}>
+              <Suspense fallback={<ReportsSkeleton />}>
                 <Reports />
               </Suspense>
             }
@@ -320,7 +328,7 @@ export function AppRoutes() {
           <Route
             path="/reports/:reportId"
             element={
-              <Suspense fallback={chunkFallback}>
+              <Suspense fallback={<ReportDetailSkeleton />}>
                 <ReportDetail />
               </Suspense>
             }
@@ -332,7 +340,7 @@ export function AppRoutes() {
             path="/admin"
             element={
               <AdminRoute>
-                <Suspense fallback={chunkFallback}>
+                <Suspense fallback={layoutChunkFallback}>
                   <AdminIndex />
                 </Suspense>
               </AdminRoute>
@@ -342,7 +350,7 @@ export function AppRoutes() {
             path="/admin/users"
             element={
               <AdminRoute>
-                <Suspense fallback={chunkFallback}>
+                <Suspense fallback={layoutChunkFallback}>
                   <AdminUsers />
                 </Suspense>
               </AdminRoute>
@@ -352,7 +360,7 @@ export function AppRoutes() {
             path="/admin/users/:userId"
             element={
               <AdminRoute>
-                <Suspense fallback={chunkFallback}>
+                <Suspense fallback={<AdminDetailSkeleton />}>
                   <AdminUserDetail />
                 </Suspense>
               </AdminRoute>
@@ -362,7 +370,7 @@ export function AppRoutes() {
             path="/admin/subscriptions"
             element={
               <AdminRoute>
-                <Suspense fallback={chunkFallback}>
+                <Suspense fallback={layoutChunkFallback}>
                   <AdminSubscriptions />
                 </Suspense>
               </AdminRoute>
@@ -372,7 +380,7 @@ export function AppRoutes() {
             path="/admin/payments"
             element={
               <AdminRoute>
-                <Suspense fallback={chunkFallback}>
+                <Suspense fallback={layoutChunkFallback}>
                   <AdminPayments />
                 </Suspense>
               </AdminRoute>
@@ -382,7 +390,7 @@ export function AppRoutes() {
             path="/admin/seeds"
             element={
               <AdminRoute>
-                <Suspense fallback={chunkFallback}>
+                <Suspense fallback={layoutChunkFallback}>
                   <AdminSeeds />
                 </Suspense>
               </AdminRoute>
@@ -392,7 +400,7 @@ export function AppRoutes() {
             path="/admin/usage-limits"
             element={
               <AdminRoute>
-                <Suspense fallback={chunkFallback}>
+                <Suspense fallback={layoutChunkFallback}>
                   <AdminUsageLimits />
                 </Suspense>
               </AdminRoute>
@@ -403,7 +411,7 @@ export function AppRoutes() {
         <Route
           path="*"
           element={
-            <Suspense fallback={chunkFallback}>
+            <Suspense fallback={standaloneChunkFallback}>
               <NotFound />
             </Suspense>
           }

@@ -9,7 +9,7 @@ import { useChatErrorRecovery } from "../hooks/useChatErrorRecovery";
 import { ChatFlow } from "../components/assistant/ChatFlow";
 import { GreetingView } from "../components/assistant/GreetingView";
 import { AssistantDisclaimer } from "../components/assistant/AssistantDisclaimer";
-import { LoadingSpinner } from "../components/ui/LoadingSpinner";
+import { AssistantSkeleton } from "../components/assistant/AssistantSkeleton";
 
 export function Assistant() {
   const navigate = useNavigate();
@@ -64,8 +64,8 @@ export function Assistant() {
   // chat view needs before mounting the ChatPanel.
   if (threadIdParam && !isReady) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <LoadingSpinner />
+      <div className="flex h-full min-h-0 flex-col">
+        <AssistantSkeleton />
       </div>
     );
   }

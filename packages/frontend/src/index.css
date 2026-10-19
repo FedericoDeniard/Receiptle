@@ -35,6 +35,10 @@
     --text-secondary: #6b7280; /* gray-500 */
     --bg-primary: #ffffff; /* white */
     --bg-secondary: #f9fafb; /* gray-50 */
+    /* Loading placeholders. A translucent neutral reads as a single token on
+       both --bg-primary and --bg-secondary surfaces — the old fallbacks
+       painted --bg-secondary on --bg-secondary and were invisible. */
+    --skeleton-base: rgb(0 0 0 / 8%);
   }
 
   body {

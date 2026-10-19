@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "../ui/Button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { ConfirmModal } from "../ui/ConfirmModal";
+import { Skeleton } from "../ui/Skeleton";
 import {
   TAG_COLOR_CLASSES,
   TAG_COLORS,
@@ -338,9 +339,18 @@ function ManageTagsList({
 
   if (isLoading) {
     return (
-      <p className="text-sm text-[var(--text-secondary)]">
-        {t("common.loading")}
-      </p>
+      <div role="status" aria-busy="true" className="space-y-2">
+        <span className="sr-only">{t("common.loading")}</span>
+        {[0, 1, 2, 3].map(i => (
+          <div
+            key={i}
+            className="flex items-center justify-between rounded-lg border border-[var(--text-secondary)]/20 p-3"
+          >
+            <Skeleton className="h-4 w-32 max-w-[60%]" />
+            <Skeleton className="size-8 rounded-md" />
+          </div>
+        ))}
+      </div>
     );
   }
 

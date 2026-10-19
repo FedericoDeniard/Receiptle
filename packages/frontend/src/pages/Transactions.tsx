@@ -32,7 +32,7 @@ import { useGmailStatus } from "../hooks/useGmailStatus";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useMediaQuery } from "../hooks/useMediaQuery";
-import { SuspenseFallback } from "../components/ui/SuspenseFallback";
+import { TransactionsSkeleton } from "../components/transactions/TransactionsSkeleton";
 import { TRANSACTION_CATEGORIES } from "../constants/transactions";
 
 // ─── Data section — suspends on transactions + gmail status ──────────────────
@@ -274,7 +274,7 @@ export function Transactions() {
         data-tour="transaction-content"
         className="flex flex-1 gap-4 min-h-0 relative"
       >
-        <Suspense fallback={<SuspenseFallback rows={6} className="w-1/3" />}>
+        <Suspense fallback={<TransactionsSkeleton />}>
           <TransactionsList
             userId={user?.id}
             filters={filters}

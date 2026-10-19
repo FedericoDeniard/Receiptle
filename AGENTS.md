@@ -121,6 +121,8 @@ Three distinct env files, never consolidated:
 
 `INTERNAL_FUNCTIONS_SECRET` must match in `supabase/functions/.env` and in Vault (`vault.decrypted_secrets`). The seed `supabase/seeds/005_internal_functions_secret_local.sql` populates it for local dev. For production, set both the env secret and the Vault secret — they are read by different layers.
 
+Worktrees: fresh checkouts don't inherit gitignored env files. Run `bun run env:sync` (`scripts/sync-env-from-main.sh`) to copy the three files above from the primary checkout into the current worktree as `.env.local` (Bun auto-loads `.env.local` over `.env`; `env-loader.ts` reads both). Edge Functions don't auto-load `.env.local`; pass it explicitly: `supabase functions serve --env-file supabase/functions/.env.local`.
+
 ## Code style
 
 - TypeScript strict, `noUncheckedIndexedAccess`. Use `import type` for type-only imports. Never `as any`.

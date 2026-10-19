@@ -1,0 +1,94 @@
+{
+  "meta": {
+    "title": "Receiptle — Your finances, automated by AI",
+    "description": "Connect your Gmail, and let Receiptle automatically extract, categorize, and track your expenses in real-time."
+  },
+  "nav": {
+    "signIn": "Sign In",
+    "getStarted": "Get Started",
+    "documentation": "Documentation",
+    "github": "GitHub",
+    "personalProject": "Personal project.",
+    "privacy": "Privacy",
+    "otherLanguage": "View the landing in Spanish",
+    "otherLanguageCode": "ES"
+  },
+  "hero": {
+    "badge": "Smart Finance Tracking on Autopilot",
+    "titlePart1": "Your Finances,",
+    "titlePart2": "Automated by AI.",
+    "description": "Connect your Gmail, and let Receiptle automatically extract, categorize, and track your expenses in real-time.",
+    "getStarted": "Get Started Now",
+    "readDocs": "Read Docs"
+  },
+  "features": {
+    "title": "Everything you need for",
+    "subtitle": "automated finance tracking",
+    "description": "Powerful features designed to give you complete visibility without the manual data entry.",
+    "gmail": {
+      "title": "Gmail Integration",
+      "description": "Real-time email processing. Stop manual entry and let Receiptle watch your inbox for receipts."
+    },
+    "ai": {
+      "title": "AI Extraction",
+      "description": "An AI analyzes your emails and documents to accurately extract amounts, merchants, and dates, and to auto-categorize your expenses."
+    },
+    "currency": {
+      "title": "Multi-Currency",
+      "description": "Effortlessly track expenses in multiple currencies with live exchange rates and comparative analytics."
+    },
+    "documents": {
+      "title": "Document Uploads",
+      "description": "Drag-and-drop PDFs and images for instant AI extraction of offline receipts."
+    },
+    "subscriptions": {
+      "title": "Subscriptions",
+      "description": "Automatic detection and monitoring of your recurring payments and digital subscriptions."
+    },
+    "security": {
+      "title": "Secure & Private",
+      "description": "Read-only access to your emails. Tokens and data are encrypted at rest and at the application layer. Never shared with third parties."
+    }
+  },
+  "howItWorks": {
+    "title": "How it works",
+    "description": "Stop wasting hours spreadsheeting your life. Receiptle automates the tedious parts of personal finance so you can focus on building wealth.",
+    "step1": {
+      "title": "Connect Account",
+      "description": "Securely link your Gmail via OAuth. We only ask for the permissions needed to read receipt emails."
+    },
+    "step2": {
+      "title": "AI Extraction",
+      "description": "Our AI instantly processes new emails and uploaded documents to extract precise financial data."
+    },
+    "step3": {
+      "title": "Gain Insights",
+      "description": "View beautiful charts, categorize expenses effortlessly, and take control of your spending."
+    },
+    "cta": {
+      "title": "Ready to see it in action?",
+      "description": "Join today and let Receiptle import your last 3 months of transaction emails automatically.",
+      "button": "Create free account",
+      "footer": "No credit card required. Setup takes 2 minutes."
+    }
+  },
+  "mock": {
+    "subscriptionsTitle": "Subscriptions",
+    "subscriptionsSubtitle": "Detected recurring charges with enough confidence will appear here.",
+    "totalLabel": "Total (Monthly)",
+    "totalAmount": "$71.18",
+    "transactionsTitle": "Transactions",
+    "transactionsSubtitle": "Gmail Integration",
+    "balanceLabel": "Balance",
+    "balanceAmount": "+$2,450.00",
+    "occurrences": "detected charges",
+    "frequencyMonthly": "Monthly",
+    "nextLabel": "Next estimate",
+    "nextShort": "Next",
+    "consistent": "Consistent",
+    "variable": "Variable",
+    "statusActive": "Active",
+    "statusInactive": "Inactive",
+    "confidence": "Confidence {{value}}%"
+  }
+}

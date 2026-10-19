@@ -1,0 +1,36 @@
+# Receiptle
+
+> Receiptle is a personal finance tracker that turns Gmail receipts and
+> uploaded documents into structured transactions. It is a single-user SaaS:
+> the marketing landing is public, everything else is behind authentication.
+
+Receiptle connects to a Gmail account over read-only OAuth, extracts amounts,
+merchants and dates from receipt emails with AI (xAI Grok), categorizes them,
+tracks recurring subscriptions, and shows a multi-currency dashboard with a
+chat assistant (OpenRouter). Supported content here is the public landing page
+and the product documentation; the application itself requires an account.
+
+## Public pages
+
+- [Receiptle](https://receiptle.com/): product landing (Spanish, the default).
+- [Receiptle (English)](https://receiptle.com/en/): the same landing in English.
+- [Privacy policy](https://receiptle.com/privacy): what data is read, stored
+  and never shared.
+
+## Documentation
+
+- [Receiptle docs](https://federicodeniard-receiptle.mintlify.app/): product
+  documentation — Gmail connection, transaction extraction, subscriptions,
+  reports and billing.
+
+## Source code
+
+- [GitHub repository](https://github.com/federicodeniard/receiptle): the
+  self-hostable codebase (React 19 + Bun SPA, Astro landing, Deno Edge
+  Functions, Postgres/Supabase).
+
+## Optional
+
+- [Create an account](https://receiptle.com/register): sign-up flow, requires
+  human interaction.
+- [Sign in](https://receiptle.com/login): authentication page.

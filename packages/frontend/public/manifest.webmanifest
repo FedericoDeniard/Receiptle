@@ -2,7 +2,7 @@
   "name": "Receiptle",
   "short_name": "Receiptle",
   "description": "Track your financial transactions automatically from Gmail",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",

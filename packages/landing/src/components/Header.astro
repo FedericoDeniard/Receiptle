@@ -1,0 +1,60 @@
+---
+import type { LandingStrings } from "../i18n";
+import DecorativeSquare from "./DecorativeSquare.astro";
+import Icon from "./Icon.astro";
+
+interface Props {
+  strings: LandingStrings;
+  /** The locale this page links to (the other one). */
+  otherLocale: "es" | "en";
+}
+
+const { strings, otherLocale } = Astro.props;
+const otherLocaleHref = otherLocale === "es" ? "/es" : "/en/";
+---
+
+<header
+  class="fixed top-0 w-full bg-[var(--bg-primary)]/80 backdrop-blur-md border-b border-[var(--text-secondary)]/10 z-50"
+>
+  <div
+    class="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between"
+  >
+    <div class="flex items-center gap-3">
+      <div class="relative size-8 flex items-center justify-center shrink-0">
+        <DecorativeSquare size={32} class="absolute inset-0 m-auto" />
+        <img
+          src="/logo.svg"
+          alt="Receiptle Logo"
+          class="relative z-10 w-full h-full p-1 object-contain"
+        />
+      </div>
+      <span class="font-bold text-xl tracking-tight text-[var(--text-primary)]">
+        Receiptle
+      </span>
+    </div>
+    <nav class="flex items-center gap-4">
+      <a
+        href={otherLocaleHref}
+        hreflang={otherLocale}
+        class="hidden sm:flex items-center gap-1.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+        title={strings.nav.otherLanguage}
+      >
+        <Icon name="globe-2" size={16} />
+        <span class="sr-only">{strings.nav.otherLanguage}</span>
+        <span aria-hidden="true">{strings.nav.otherLanguageCode}</span>
+      </a>
+      <a
+        href="/login"
+        class="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+      >
+        {strings.nav.signIn}
+      </a>
+      <a
+        href="/register"
+        class="text-sm font-medium bg-[var(--primary)] text-white px-4 py-2 rounded-lg hover:bg-[var(--primary-hover)] transition-colors shadow-sm"
+      >
+        {strings.nav.getStarted}
+      </a>
+    </nav>
+  </div>
+</header>

@@ -1,0 +1,125 @@
+---
+import type { LandingStrings } from "../i18n";
+import type { IconName } from "./icon-paths";
+import Icon from "./Icon.astro";
+
+interface Props {
+  strings: LandingStrings;
+}
+
+const { strings } = Astro.props;
+
+const steps: {
+  number: string;
+  icon: IconName;
+  title: string;
+  description: string;
+}[] = [
+  {
+    number: "01",
+    icon: "mail-check",
+    title: strings.howItWorks.step1.title,
+    description: strings.howItWorks.step1.description,
+  },
+  {
+    number: "02",
+    icon: "cpu",
+    title: strings.howItWorks.step2.title,
+    description: strings.howItWorks.step2.description,
+  },
+  {
+    number: "03",
+    icon: "bar-chart-3",
+    title: strings.howItWorks.step3.title,
+    description: strings.howItWorks.step3.description,
+  },
+];
+---
+
+<section
+  class="py-24 bg-white border-y border-[var(--text-secondary)]/10 relative overflow-hidden"
+>
+  <div
+    class="absolute top-0 right-0 w-1/2 h-full bg-linear-to-l from-[var(--bg-secondary)] to-transparent opacity-50"
+  >
+  </div>
+
+  <div
+    class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10"
+  >
+    <div class="flex flex-col lg:flex-row gap-16 items-center">
+      <div class="w-full lg:w-1/2 reveal-left">
+        <h2
+          class="text-3xl md:text-4xl font-semibold text-[var(--text-primary)] mb-6"
+        >
+          {strings.howItWorks.title}
+        </h2>
+        <p
+          class="text-lg text-[var(--text-secondary)] mb-10 leading-relaxed max-w-lg"
+        >
+          {strings.howItWorks.description}
+        </p>
+
+        <div class="space-y-10">
+          {
+            steps.map((step, idx) => (
+              <div class="flex gap-6 relative">
+                {idx !== steps.length - 1 && (
+                  <div class="absolute left-6 top-14 w-px h-[calc(100%-24px)] bg-[var(--text-secondary)]/20" />
+                )}
+
+                <div class="size-12 rounded-full bg-[var(--primary)] text-white flex items-center justify-center shrink-0 font-bold z-10 shadow-md">
+                  {step.number}
+                </div>
+
+                <div>
+                  <h3 class="text-xl font-semibold text-[var(--text-primary)] mb-2 flex items-center gap-2">
+                    {step.title}
+                    <Icon
+                      name={step.icon}
+                      size={18}
+                      class="text-[var(--text-secondary)]"
+                    />
+                  </h3>
+                  <p class="text-[var(--text-secondary)] leading-relaxed">
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      <div class="w-full lg:w-1/2 reveal-scale">
+        <div
+          class="bg-[var(--primary)] rounded-3xl p-10 lg:p-12 text-center text-white shadow-2xl relative overflow-hidden"
+        >
+          <div
+            class="absolute top-0 right-0 size-64 bg-[var(--accent)] rounded-full mix-blend-multiply filter blur-[80px] opacity-30"
+          >
+          </div>
+
+          <div class="relative z-10">
+            <h3 class="text-3xl font-semibold mb-6">
+              {strings.howItWorks.cta.title}
+            </h3>
+            <p class="text-zinc-300 mb-8 text-lg">
+              {strings.howItWorks.cta.description}
+            </p>
+            <a
+              href="/register"
+              class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-[var(--primary)] hover:bg-zinc-100 rounded-xl font-bold transition-[color,background-color,border-color,box-shadow,opacity,transform] w-full sm:w-auto hover:scale-105"
+            >
+              {strings.howItWorks.cta.button}
+              <Icon name="arrow-right" size={20} />
+            </a>
+            <p class="mt-6 text-sm text-zinc-400">
+              {strings.howItWorks.cta.footer}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,79 @@
+---
+import type { LandingStrings } from "../i18n";
+import Icon from "./Icon.astro";
+import MockWindow from "./MockWindow.astro";
+
+interface Props {
+  strings: LandingStrings;
+  locale: string;
+}
+
+const { strings, locale } = Astro.props;
+---
+
+<div
+  class="relative overflow-hidden bg-[var(--bg-primary)] pt-16 sm:pt-24 lg:pt-32 pb-16"
+>
+  <div
+    class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full overflow-hidden pointer-events-none"
+  >
+    <div
+      class="absolute -top-40 -right-40 size-96 bg-[var(--accent)] rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-pulse"
+    >
+    </div>
+    <div
+      class="absolute top-40 -left-40 size-96 bg-[var(--primary)] rounded-full mix-blend-multiply filter blur-[128px] opacity-10"
+    >
+    </div>
+  </div>
+
+  <div class="relative container mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-4xl mx-auto">
+      <div
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--bg-secondary)] border border-[var(--text-secondary)]/20 text-[var(--text-secondary)] mb-8 anim-scale"
+      >
+        <Icon name="sparkles" size={16} class="text-[var(--accent)]" />
+        <span class="text-sm font-medium">{strings.hero.badge}</span>
+      </div>
+
+      <h1
+        class="text-5xl sm:text-6xl md:text-7xl font-semibold text-[var(--text-primary)] tracking-tight mb-8 anim-rise"
+        style="--anim-delay: 100ms"
+      >
+        {strings.hero.titlePart1}
+        <br class="hidden sm:block" />
+        <span class="text-[var(--primary)]">{strings.hero.titlePart2}</span>
+      </h1>
+
+      <p
+        class="text-xl sm:text-2xl text-[var(--text-secondary)] mb-10 max-w-2xl mx-auto leading-relaxed anim-rise"
+        style="--anim-delay: 200ms"
+      >
+        {strings.hero.description}
+      </p>
+
+      <div
+        class="flex flex-col sm:flex-row items-center justify-center gap-4 anim-rise"
+        style="--anim-delay: 300ms"
+      >
+        <a
+          href="/register"
+          class="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-[var(--button-primary)] hover:bg-[var(--button-primary-hover)] text-white rounded-xl font-semibold transition-[color,background-color,border-color,box-shadow,opacity,transform] shadow-lg hover:shadow-xl hover:-translate-y-1"
+        >
+          {strings.hero.getStarted}
+          <Icon name="arrow-right" size={20} />
+        </a>
+        <a
+          href="https://federicodeniard-receiptle.mintlify.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="w-full sm:w-auto flex items-center justify-center px-8 py-4 bg-[var(--bg-secondary)] hover:bg-zinc-100 text-[var(--text-primary)] border border-[var(--text-secondary)]/20 rounded-xl font-semibold transition-[color,background-color,border-color,box-shadow,opacity,transform]"
+        >
+          {strings.hero.readDocs}
+        </a>
+      </div>
+    </div>
+
+    <MockWindow strings={strings} locale={locale} />
+  </div>
+</div>

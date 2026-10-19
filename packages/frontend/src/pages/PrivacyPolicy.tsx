@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
 import { DecorativeSquare } from "../components/ui/DecorativeSquare";
 import logo from "../logo.svg";
 
@@ -60,7 +59,8 @@ export function PrivacyPolicy() {
       {/* Header */}
       <header className="border-b border-[var(--text-secondary)]/10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-3">
-          <Link to="/" className="flex items-center gap-3">
+          {/* Full navigation: `/` is the Astro landing, not an SPA route. */}
+          <a href="/" className="flex items-center gap-3">
             <div className="relative size-8 flex items-center justify-center shrink-0">
               <DecorativeSquare size={32} className="absolute inset-0 m-auto" />
               <img
@@ -72,7 +72,7 @@ export function PrivacyPolicy() {
             <span className="font-bold text-xl tracking-tight text-[var(--text-primary)]">
               Receiptle
             </span>
-          </Link>
+          </a>
         </div>
       </header>
 

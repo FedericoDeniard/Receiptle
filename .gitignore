@@ -9,6 +9,9 @@ dist
 *.tgz
 .mastra/
 
+# Astro generated types / cache
+.astro/
+
 # debug artifacts
 *.heapsnapshot
 .debug/

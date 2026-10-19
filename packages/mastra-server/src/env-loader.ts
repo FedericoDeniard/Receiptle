@@ -1,5 +1,7 @@
-// Loads .env from the current working directory into process.env
-// SYNCHRONOUSLY, blocking the event loop until done.
+// Loads .env and .env.local from the current working directory into
+// process.env SYNCHRONOUSLY, blocking the event loop until done.
+// .env.local wins over .env, matching Bun's own precedence.
+// Worktree checkouts get .env.local from scripts/sync-env-from-main.sh.
 //
 // WHY THIS EXISTS:
 // Bun auto-loads .env when invoked directly (bun src/server.ts),
@@ -28,11 +30,15 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
-const envPath = join(process.cwd(), ".env");
+const envFileNames = [".env", ".env.local"];
+const parsed = new Map<string, string>();
+const foundFiles: string[] = [];
 
-if (existsSync(envPath)) {
+for (const name of envFileNames) {
+  const envPath = join(process.cwd(), name);
+  if (!existsSync(envPath)) continue;
+  foundFiles.push(name);
   const text = readFileSync(envPath, "utf-8");
-  let loaded = 0;
   for (const rawLine of text.split("\n")) {
     const line = rawLine.trim();
     if (!line || line.startsWith("#")) continue;
@@ -46,20 +52,28 @@ if (existsSync(envPath)) {
     ) {
       value = value.slice(1, -1);
     }
-    if (process.env[key] === undefined) {
-      process.env[key] = value;
-      loaded++;
-    }
+    parsed.set(key, value);
   }
-  if (process.env.OPENROUTER_API_KEY) {
-    console.log(
-      `[env-loader] loaded ${loaded} vars from .env; OPENROUTER_API_KEY prefix=${process.env.OPENROUTER_API_KEY.substring(0, 15)}, length=${process.env.OPENROUTER_API_KEY.length}`
-    );
-  } else {
-    console.warn(
-      `[env-loader] loaded ${loaded} vars from .env but OPENROUTER_API_KEY is still missing!`
-    );
+}
+
+let loaded = 0;
+for (const [key, value] of parsed) {
+  if (process.env[key] === undefined) {
+    process.env[key] = value;
+    loaded++;
   }
+}
+
+const origin = foundFiles.join(", ");
+
+if (foundFiles.length === 0) {
+  console.warn(`[env-loader] no .env or .env.local found at ${process.cwd()}`);
+} else if (process.env.OPENROUTER_API_KEY) {
+  console.log(
+    `[env-loader] loaded ${loaded} vars from ${origin}; OPENROUTER_API_KEY prefix=${process.env.OPENROUTER_API_KEY.substring(0, 15)}, length=${process.env.OPENROUTER_API_KEY.length}`
+  );
 } else {
-  console.warn(`[env-loader] no .env found at ${envPath}`);
+  console.warn(
+    `[env-loader] loaded ${loaded} vars from ${origin} but OPENROUTER_API_KEY is still missing!`
+  );
 }

@@ -1,0 +1,17 @@
+{
+  "name": "landing",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev --port 4321",
+    "build": "astro build",
+    "preview": "astro preview --port 4321",
+    "icons:generate": "node scripts/generate-icons.mjs"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.4.0",
+    "tailwindcss": "^4.3.3"
+  }
+}

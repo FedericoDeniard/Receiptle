@@ -1,0 +1,87 @@
+---
+import "../styles/global.css";
+import type { LandingStrings } from "../i18n";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+
+interface Props {
+  strings: LandingStrings;
+  locale: "es" | "en";
+  path: "/" | "/en/";
+}
+
+const { strings, locale, path } = Astro.props;
+const site = Astro.site ?? new URL("https://receiptle.com");
+const canonical = new URL(path, site).href;
+---
+
+<!doctype html>
+<html lang={locale} translate="no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>{strings.meta.title}</title>
+    <meta name="description" content={strings.meta.description} />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="es" href={new URL("/", site).href} />
+    <link rel="alternate" hreflang="en" href={new URL("/en/", site).href} />
+    <link rel="alternate" hreflang="x-default" href={new URL("/", site).href} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Receiptle" />
+    <meta property="og:title" content={strings.meta.title} />
+    <meta property="og:description" content={strings.meta.description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={locale === "es" ? "es_ES" : "en_US"} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={strings.meta.title} />
+    <meta name="twitter:description" content={strings.meta.description} />
+
+    <script is:inline>
+      // Signed-in visitors belong in the app, not on the marketing page
+      // (this replaces the old <PublicOnlyRoute> around the landing).
+      // Supabase persists the session in localStorage under
+      // `sb-<project-ref>-auth-token`; the SPA invalidates it if needed.
+      (function () {
+        try {
+          for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (!key || !/^sb-.*-auth-token(\.\d+)?$/.test(key)) continue;
+            if (!localStorage.getItem(key)) continue;
+            location.replace("/dashboard");
+            return;
+          }
+        } catch (error) {
+          /* storage unavailable — show the landing */
+        }
+      })();
+    </script>
+
+    {
+      /* The landing never redirects on its own: `/` is always Spanish and
+         `/en/` always English. We only remember the locale the visitor is
+         looking at, so the app opens in the same language they chose. */
+    }
+    <script is:inline define:vars={{ locale }}>
+      (function () {
+        try {
+          localStorage.setItem("i18nextLng", locale);
+        } catch (error) {
+          /* storage unavailable — the app falls back to browser detection */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div
+      class="min-h-dvh bg-[var(--bg-primary)] flex flex-col font-sans selection:bg-[var(--accent)] selection:text-[var(--primary)]"
+    >
+      <Header strings={strings} otherLocale={locale === "es" ? "en" : "es"} />
+      <main class="grow pt-16">
+        <slot />
+      </main>
+      <Footer strings={strings} />
+    </div>
+  </body>
+</html>

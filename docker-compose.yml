@@ -10,7 +10,9 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - ./packages/frontend/.env
+      # Optional: worktrees may only have .env.local (scripts/sync-env-from-main.sh).
+      - path: ./packages/frontend/.env
+        required: false
     volumes:
       - ./:/app
       - bun_cache:/root/.bun/install/cache
@@ -32,7 +34,8 @@ services:
     tty: true
     stdin_open: true
     env_file:
-      - ./supabase/functions/.env
+      - path: ./supabase/functions/.env
+        required: false
     volumes:
       - ${PROJECT_ROOT}:${PROJECT_ROOT}
       - /var/run/docker.sock:/var/run/docker.sock

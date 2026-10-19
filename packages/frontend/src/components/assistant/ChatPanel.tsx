@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { useChat, type UIMessage } from "@ai-sdk/react";
@@ -70,10 +70,12 @@ export function ChatPanel({
   // Snapshot DB messages at mount — useChat only reads `messages` in the constructor.
   // Parent must not refetch mid-session (would pass stale partial DB rows).
   const bootstrapMessagesRef = useRef(initialMessages);
-  const initialMessageIdsRef = useRef<Set<string> | null>(null);
-  if (initialMessageIdsRef.current === null) {
-    initialMessageIdsRef.current = new Set(initialMessages.map(m => m.id));
-  }
+  // Ids considered "already seen" so only messages that arrive during this
+  // session get the enter animation. The lazy initializer computes the set
+  // once per mount: rendering never mutates it, and it is never rebuilt.
+  const [initialMessageIds] = useState(
+    () => new Set(initialMessages.map(m => m.id))
+  );
   // Track the most recent uploaded attachments so we can roll them back
   // (delete from storage + DB) if the model rejects the request.
   const pendingAttachmentsRef = useRef<ChatAttachment[]>([]);
@@ -369,9 +371,7 @@ export function ChatPanel({
             messages.map(message => {
               const isUser = message.role === "user";
               const showDots = message.id === streamingAssistantId;
-              const isNewMessage = !initialMessageIdsRef.current!.has(
-                message.id
-              );
+              const isNewMessage = !initialMessageIds.has(message.id);
 
               const messageContent = (
                 <Message from={message.role} key={message.id}>

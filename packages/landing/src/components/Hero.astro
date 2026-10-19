@@ -37,10 +37,11 @@ const { strings, locale } = Astro.props;
       </div>
 
       <h1
-        class="text-5xl sm:text-6xl md:text-7xl font-semibold text-[var(--text-primary)] tracking-tight mb-8 anim-rise"
+        class="text-4xl sm:text-6xl md:text-7xl font-semibold text-[var(--text-primary)] tracking-tight mb-8 break-words anim-rise"
         style="--anim-delay: 100ms"
       >
         {strings.hero.titlePart1}
+        {" "}
         <br class="hidden sm:block" />
         <span class="text-[var(--primary)]">{strings.hero.titlePart2}</span>
       </h1>

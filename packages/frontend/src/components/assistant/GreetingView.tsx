@@ -5,7 +5,7 @@ import { AssistantInput } from "./AssistantInput";
 import { AssistantHeader } from "./AssistantHeader";
 import { AssistantLayout } from "./AssistantLayout";
 import { QuickQuestions } from "./QuickQuestions";
-import { LoadingSpinner } from "../ui/LoadingSpinner";
+import { Skeleton } from "../ui/Skeleton";
 import { useAssistantShell } from "../../hooks/useAssistantShell";
 import { generateThreadId, queueAutoSend } from "../../lib/assistant-store";
 
@@ -52,9 +52,7 @@ export function GreetingView({
         </QuickQuestions>
 
         {!isReady ? (
-          <div className="flex items-center justify-center py-12">
-            <LoadingSpinner />
-          </div>
+          <Skeleton className="h-24 w-full rounded-2xl" />
         ) : (
           <AssistantInput
             resolveThreadId={generateThreadId}

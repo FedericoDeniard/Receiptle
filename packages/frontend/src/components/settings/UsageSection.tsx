@@ -10,6 +10,7 @@
 import { useTranslation } from "react-i18next";
 import { Inbox } from "lucide-react";
 import { SettingsCategoryCard } from "./SettingsCategoryCard";
+import { SettingsSkeleton } from "./SettingsSkeleton";
 import { UsageRowCard } from "./UsageRowCard";
 import { useUserUsage } from "../../hooks/useUserUsage";
 import { assertCapabilityEnumSync } from "../../lib/capabilities";
@@ -29,7 +30,7 @@ export function UsageSection() {
       descriptionKey="settingsLayout.categoryDescription.usage"
     >
       {isLoading ? (
-        <UsageSkeleton />
+        <SettingsSkeleton variant="usage" />
       ) : isError ? (
         <UsageErrorState onRetry={refetch} />
       ) : orderedRows.length === 0 ? (
@@ -42,24 +43,6 @@ export function UsageSection() {
         </div>
       )}
     </SettingsCategoryCard>
-  );
-}
-
-function UsageSkeleton() {
-  return (
-    <div
-      className="divide-y divide-[var(--text-secondary)]/10 overflow-hidden rounded-xl bg-[var(--bg-secondary)] animate-pulse"
-      aria-busy="true"
-      aria-live="polite"
-    >
-      {[0, 1, 2].map(i => (
-        <div
-          key={i}
-          className="h-14 bg-[var(--bg-secondary)]"
-          style={{ opacity: 1 - i * 0.15 }}
-        />
-      ))}
-    </div>
   );
 }
 

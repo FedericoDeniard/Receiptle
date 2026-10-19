@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { History, Plus, Trash2 } from "lucide-react";
 import { useChatThreads, useDeleteThread } from "../../hooks/useChatThreads";
+import { AssistantSkeleton } from "./AssistantSkeleton";
 import { cn } from "../../lib/utils";
 
 interface HistoryListProps {
@@ -71,11 +72,7 @@ export function HistoryList({
       </div>
 
       <div className="flex-1 overflow-y-auto p-2">
-        {isLoading && (
-          <div className="px-3 py-6 text-center text-sm text-[var(--text-secondary)]">
-            {t("assistant.historyLoading")}
-          </div>
-        )}
+        {isLoading && <AssistantSkeleton variant="history" />}
 
         {!isLoading && threads?.length === 0 && (
           <div className="px-3 py-6 text-center text-sm text-[var(--text-secondary)]">

@@ -7,7 +7,7 @@ import { useInvalidateGmailQueries } from "../../hooks/useGmailStatus";
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { SeedEmailsModal } from "./SeedEmailsModal";
 import { SettingsCategoryCard } from "./SettingsCategoryCard";
-import { SuspenseFallback } from "../ui/SuspenseFallback";
+import { SettingsSkeleton } from "./SettingsSkeleton";
 import { GmailPanel } from "./GmailPanel";
 import { gmailService } from "../../services/gmail.service";
 import { toast } from "../../utils/toast";
@@ -163,7 +163,7 @@ export function ConnectionsSection() {
       descriptionKey="settingsLayout.categoryDescription.connections"
       dataTour="settings-gmail"
     >
-      <Suspense fallback={<SuspenseFallback rows={3} />}>
+      <Suspense fallback={<SettingsSkeleton variant="gmail" />}>
         <GmailPanel
           userId={user?.id}
           isConnecting={isConnecting}

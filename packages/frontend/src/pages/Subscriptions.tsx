@@ -15,7 +15,7 @@ import {
   getSubscriptionStatusRank,
 } from "../components/subscriptions/subscriptionStatus";
 import { useSubscriptionCandidates } from "../hooks/useSubscriptionCandidates";
-import { SuspenseFallback } from "../components/ui/SuspenseFallback";
+import { SubscriptionsSkeleton } from "../components/subscriptions/SubscriptionsSkeleton";
 
 const DEFAULT_STATUS_FILTER: SubscriptionStatusFilter = "all";
 const DEFAULT_SORT_BY: SubscriptionSortBy = "status";
@@ -185,7 +185,7 @@ export function Subscriptions() {
       </div>
       {/* List — suspends while subscription candidates load */}
       <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-        <Suspense fallback={<SuspenseFallback rows={5} />}>
+        <Suspense fallback={<SubscriptionsSkeleton viewMode={viewMode} />}>
           <SubscriptionList
             statusFilter={statusFilter}
             sortBy={sortBy}

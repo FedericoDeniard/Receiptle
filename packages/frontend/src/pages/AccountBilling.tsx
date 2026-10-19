@@ -10,6 +10,7 @@ import {
 } from "../hooks/useCreateCheckoutLink";
 import { useCancelSubscription } from "../hooks/useCancelSubscription";
 import { PricingGrid } from "../components/account-billing/PricingGrid";
+import { AccountBillingSkeleton } from "../components/account-billing/AccountBillingSkeleton";
 import { ConfirmModal } from "../components/ui/ConfirmModal";
 import { toast } from "../utils/toast";
 import { getEdgeFunctionErrorMessage } from "../utils/edge-function-errors";
@@ -121,13 +122,17 @@ export function AccountBilling() {
         </p>
       </section>
 
-      <PricingGrid
-        freePlan={FREE_PLAN}
-        dbPlans={plans ?? []}
-        subscription={subscription ?? null}
-        pendingKey={pendingKey}
-        onSelect={handleSelect}
-      />
+      {isLoading ? (
+        <AccountBillingSkeleton />
+      ) : (
+        <PricingGrid
+          freePlan={FREE_PLAN}
+          dbPlans={plans ?? []}
+          subscription={subscription ?? null}
+          pendingKey={pendingKey}
+          onSelect={handleSelect}
+        />
+      )}
 
       {subscription &&
         subscription.plan_id &&
@@ -158,8 +163,6 @@ export function AccountBilling() {
         isDestructive
         isLoading={cancelSubscription.isPending}
       />
-
-      {isLoading ? null : null}
     </div>
   );
 }

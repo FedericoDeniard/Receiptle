@@ -14,7 +14,7 @@ import { useSeedNotifications } from "../hooks/useSeedNotifications";
 import { useTransactions } from "../hooks/useTransactions";
 import { useReports } from "../hooks/useReports";
 import { useMetricsData } from "../hooks/useMetricsData";
-import { SuspenseFallback } from "../components/ui/SuspenseFallback";
+import { DashboardSkeleton } from "../components/dashboard/DashboardSkeleton";
 import { currentYearMonth, getDateRange } from "../utils/period";
 
 // ─── Data section — suspends while queries load ─────────────────────────────
@@ -41,7 +41,7 @@ function DashboardContent({
     []
   );
 
-  const { metrics, filteredTransactions } = useMetricsData({
+  const { metrics, filteredTransactions, isLoadingAllPages } = useMetricsData({
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
     previousStartDate: dateRange.previousStartDate,
@@ -103,25 +103,37 @@ function DashboardContent({
 
   return (
     <div className="space-y-6">
-      <KpiRow
-        totalIncome={metrics.totalIncome}
-        totalExpense={metrics.totalExpense}
-        netBalance={metrics.netBalance}
-        savingsRate={metrics.savingsRate}
-        changes={metrics.changes}
-        displayCurrency={displayCurrency}
-      />
-
-      <DashboardCharts categoryData={categoryData} hasData={hasTransactions} />
-
-      {hasTransactions ? (
-        <RecentTransactions
-          transactions={recentTransactions}
-          reportsById={reportsById}
-          onSelectTransaction={onSelectTransaction}
-        />
+      {isLoadingAllPages ? (
+        <DashboardSkeleton />
       ) : (
-        <OnboardingSteps onUpload={onUpload} onAddManually={onAddManually} />
+        <>
+          <KpiRow
+            totalIncome={metrics.totalIncome}
+            totalExpense={metrics.totalExpense}
+            netBalance={metrics.netBalance}
+            savingsRate={metrics.savingsRate}
+            changes={metrics.changes}
+            displayCurrency={displayCurrency}
+          />
+
+          <DashboardCharts
+            categoryData={categoryData}
+            hasData={hasTransactions}
+          />
+
+          {hasTransactions ? (
+            <RecentTransactions
+              transactions={recentTransactions}
+              reportsById={reportsById}
+              onSelectTransaction={onSelectTransaction}
+            />
+          ) : (
+            <OnboardingSteps
+              onUpload={onUpload}
+              onAddManually={onAddManually}
+            />
+          )}
+        </>
       )}
     </div>
   );
@@ -158,7 +170,7 @@ export function Home() {
         <Greeting user={user} />
       </section>
       {user?.id && (
-        <Suspense fallback={<SuspenseFallback rows={6} />}>
+        <Suspense fallback={<DashboardSkeleton />}>
           <DashboardContent
             onSelectTransaction={handleSelectTransaction}
             onUpload={openUpload}

@@ -196,6 +196,8 @@
     "emptyDescription": "Agrupa transacciones relacionadas para revisarlas, exportarlas o analizarlas juntas.",
     "archivedEmpty": "No hay reportes archivados",
     "archivedEmptyDescription": "Los reportes que archives aparecerán aquí para consulta posterior.",
+    "notFoundTitle": "Reporte no encontrado",
+    "notFoundDescription": "Puede que se haya eliminado o que ya no tengas acceso.",
     "form": {
       "titleLabel": "Título",
       "titlePlaceholder": "Ej. Viaje Italia, Cliente Acme, Enero 2026",

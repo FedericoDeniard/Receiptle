@@ -6,7 +6,12 @@ import { ReportDetailHeader } from "../components/reports/ReportDetailHeader";
 import { ReportSummaryStats } from "../components/reports/ReportSummaryStats";
 import { ReportTransactionsTable } from "../components/reports/ReportTransactionsTable";
 import { ReportFormModal } from "../components/reports/ReportFormModal";
-import { SuspenseFallback } from "../components/ui/SuspenseFallback";
+import {
+  ReportDetailSkeleton,
+  ReportTableSkeleton,
+} from "../components/reports/ReportDetailSkeleton";
+import { EmptyState } from "../components/ui/EmptyState";
+import { FileQuestion } from "lucide-react";
 import { useReport, useReportTransactions } from "../hooks/useReports";
 import { useReportMutations } from "../hooks/useReportMutations";
 import { useExportReportPdf } from "../hooks/useExportReportPdf";
@@ -36,11 +41,21 @@ export function ReportDetail() {
 
   const [editOpen, setEditOpen] = useState(false);
 
-  if (reportLoading || !report) {
+  if (reportLoading) {
+    return <ReportDetailSkeleton />;
+  }
+
+  if (!report) {
     return (
-      <div className="space-y-6">
-        <SuspenseFallback rows={4} />
-      </div>
+      <EmptyState
+        icon={FileQuestion}
+        title={t("reports.notFoundTitle")}
+        description={t("reports.notFoundDescription")}
+        action={{
+          label: t("reports.header.back"),
+          onClick: () => navigate("/reports"),
+        }}
+      />
     );
   }
 
@@ -127,7 +142,7 @@ export function ReportDetail() {
       <ReportSummaryStats perCurrency={report.perCurrency} />
 
       {txLoading ? (
-        <SuspenseFallback rows={4} />
+        <ReportTableSkeleton />
       ) : (
         <ReportTransactionsTable items={transactions} total={total} />
       )}

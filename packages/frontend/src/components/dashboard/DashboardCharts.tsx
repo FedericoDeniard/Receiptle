@@ -2,7 +2,7 @@ import { Suspense, lazy } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { ArrowRight, BarChart2 } from "lucide-react";
-import { LoadingSpinner } from "../ui/LoadingSpinner";
+import { ChartSkeleton } from "../ui/Skeleton";
 
 const CategoryTreeMapChart = lazy(
   () => import("../charts/CategoryTreeMapChart")
@@ -63,7 +63,7 @@ export function DashboardCharts({
           <ArrowRight size={14} />
         </Link>
       </div>
-      <Suspense fallback={<LoadingSpinner />}>
+      <Suspense fallback={<ChartSkeleton />}>
         <CategoryTreeMapChart data={categoryData} />
       </Suspense>
     </section>

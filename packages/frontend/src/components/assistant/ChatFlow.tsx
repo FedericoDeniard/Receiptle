@@ -1,6 +1,6 @@
 import { ChatPanel } from "./ChatPanel";
 import { AssistantLayout } from "./AssistantLayout";
-import { LoadingSpinner } from "../ui/LoadingSpinner";
+import { AssistantSkeleton } from "./AssistantSkeleton";
 import { useAssistantShell } from "../../hooks/useAssistantShell";
 import type { UIMessage } from "ai";
 
@@ -48,9 +48,7 @@ export function ChatFlow({
   return (
     <AssistantLayout activeThreadId={threadId} {...shell}>
       {initialMessages === null ? (
-        <div className="flex flex-1 items-center justify-center">
-          <LoadingSpinner />
-        </div>
+        <AssistantSkeleton />
       ) : (
         <ChatPanel
           key={chatKey}

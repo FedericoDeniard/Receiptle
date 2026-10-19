@@ -13,7 +13,6 @@ export function useInfiniteScroll({
   isLoading,
   threshold = 200,
 }: UseInfiniteScrollOptions): React.RefObject<HTMLDivElement> {
-  const observerRef = useRef<IntersectionObserver | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const handleObserver = useCallback(
@@ -33,16 +32,16 @@ export function useInfiniteScroll({
       threshold: 0.1,
     };
 
-    observerRef.current = new IntersectionObserver(handleObserver, options);
+    // The observer lives in this effect's closure so the cleanup
+    // deterministically disconnects the instance this effect created.
+    const observer = new IntersectionObserver(handleObserver, options);
 
     if (sentinelRef.current) {
-      observerRef.current.observe(sentinelRef.current);
+      observer.observe(sentinelRef.current);
     }
 
     return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
+      observer.disconnect();
     };
   }, [handleObserver, threshold]);
 

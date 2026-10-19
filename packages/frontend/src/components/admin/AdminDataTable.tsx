@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   flexRender,
   useTable,
@@ -15,6 +16,9 @@ import {
   ChevronsUpDown,
 } from "lucide-react";
 import { adminTableFeatures } from "../../lib/admin-table-features";
+import { Skeleton } from "../ui/Skeleton";
+
+const SKELETON_ROWS = [0, 1, 2, 3, 4, 5];
 
 interface AdminDataTableProps<TRow extends RowData> {
   /** TanStack column definitions. Each column needs an accessorKey
@@ -58,6 +62,7 @@ export function AdminDataTable<TRow extends RowData>({
   rowKey,
   onRowClick,
 }: AdminDataTableProps<TRow>) {
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -89,15 +94,10 @@ export function AdminDataTable<TRow extends RowData>({
     };
   }, [rows]);
 
-  if (loading && rows.length === 0) {
-    return (
-      <div className="rounded-xl border border-[var(--text-secondary)]/20 bg-[var(--bg-primary)] p-8 text-center text-sm text-[var(--text-secondary)]">
-        Loading…
-      </div>
-    );
-  }
+  const showSkeleton = loading && rows.length === 0;
+  const columnCount = table.getHeaderGroups()[0]?.headers.length ?? 0;
 
-  if (error) {
+  if (!showSkeleton && error) {
     return (
       <div className="rounded-xl border border-red-300 bg-red-50 p-8 text-center text-sm text-red-700">
         {error.message}
@@ -105,7 +105,7 @@ export function AdminDataTable<TRow extends RowData>({
     );
   }
 
-  if (rows.length === 0) {
+  if (!showSkeleton && rows.length === 0) {
     return (
       <div className="rounded-xl border border-[var(--text-secondary)]/20 bg-[var(--bg-primary)] p-8 text-center text-sm text-[var(--text-secondary)]">
         {emptyMessage}
@@ -119,7 +119,7 @@ export function AdminDataTable<TRow extends RowData>({
 
   return (
     <div className="relative">
-      {canScrollLeft ? (
+      {!showSkeleton && canScrollLeft ? (
         <button
           type="button"
           onClick={() => scrollBy(-240)}
@@ -129,7 +129,7 @@ export function AdminDataTable<TRow extends RowData>({
           <ChevronLeft size={16} />
         </button>
       ) : null}
-      {canScrollRight ? (
+      {!showSkeleton && canScrollRight ? (
         <button
           type="button"
           onClick={() => scrollBy(240)}
@@ -142,8 +142,12 @@ export function AdminDataTable<TRow extends RowData>({
 
       <div
         ref={scrollRef}
+        aria-busy={showSkeleton || undefined}
         className="overflow-x-auto rounded-xl border border-[var(--text-secondary)]/20 bg-[var(--bg-primary)]"
       >
+        {showSkeleton ? (
+          <span className="sr-only">{t("common.loading")}</span>
+        ) : null}
         <table className="w-max min-w-full text-sm">
           <thead className="bg-[var(--bg-secondary)] text-left text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)]">
             {table.getHeaderGroups().map(headerGroup => (
@@ -185,15 +189,31 @@ export function AdminDataTable<TRow extends RowData>({
             ))}
           </thead>
           <tbody className="divide-y divide-[var(--text-secondary)]/10">
-            {table.getRowModel().rows.map(row => (
-              <RowEl
-                key={row.id}
-                row={row}
-                onClick={
-                  onRowClick ? () => onRowClick(row.original) : undefined
-                }
-              />
-            ))}
+            {showSkeleton
+              ? SKELETON_ROWS.map(rowIndex => (
+                  <tr key={rowIndex}>
+                    {Array.from({ length: columnCount }).map(
+                      (_, columnIndex) => (
+                        <td key={columnIndex} className="px-4 py-3">
+                          <Skeleton
+                            className={`h-4 ${columnIndex === 0 ? "w-32" : "w-20"}`}
+                          />
+                        </td>
+                      )
+                    )}
+                  </tr>
+                ))
+              : table
+                  .getRowModel()
+                  .rows.map(row => (
+                    <RowEl
+                      key={row.id}
+                      row={row}
+                      onClick={
+                        onRowClick ? () => onRowClick(row.original) : undefined
+                      }
+                    />
+                  ))}
           </tbody>
         </table>
       </div>

@@ -1,7 +1,8 @@
 import { useState, useMemo, Suspense, lazy } from "react";
 import { useTranslation } from "react-i18next";
 import { useMetricsData } from "../hooks/useMetricsData";
-import { LoadingSpinner } from "../components/ui/LoadingSpinner";
+import { MetricsSkeleton } from "../components/metrics/MetricsSkeleton";
+import { ChartSkeleton } from "../components/ui/Skeleton";
 import { parseDateSafe } from "../hooks/useFormatDate";
 import {
   TrendingUp,
@@ -219,9 +220,7 @@ export function Metrics() {
 
       <div data-tour="metrics-content">
         {loading ? (
-          <div className="flex items-center justify-center h-48">
-            <LoadingSpinner size="lg" />
-          </div>
+          <MetricsSkeleton />
         ) : selectedCurrency === "all" && availableCurrencies.length > 1 ? (
           <div>
             <CurrencyComparison
@@ -276,11 +275,11 @@ export function Metrics() {
                   </div>
                 </div>
                 {trendChartType === "bar" ? (
-                  <Suspense fallback={<LoadingSpinner />}>
+                  <Suspense fallback={<ChartSkeleton />}>
                     <MonthlyTrendChart data={monthlyData} />
                   </Suspense>
                 ) : (
-                  <Suspense fallback={<LoadingSpinner />}>
+                  <Suspense fallback={<ChartSkeleton />}>
                     <MonthlyAreaChart data={monthlyData} />
                   </Suspense>
                 )}
@@ -314,11 +313,11 @@ export function Metrics() {
                   </div>
                 </div>
                 {breakdownChartType === "pie" ? (
-                  <Suspense fallback={<LoadingSpinner />}>
+                  <Suspense fallback={<ChartSkeleton />}>
                     <CategoryPieChart data={categoryData} />
                   </Suspense>
                 ) : (
-                  <Suspense fallback={<LoadingSpinner />}>
+                  <Suspense fallback={<ChartSkeleton />}>
                     <CategoryTreeMapChart data={categoryData} />
                   </Suspense>
                 )}

@@ -196,6 +196,8 @@
     "emptyDescription": "Group related transactions to review, export, or analyze them together.",
     "archivedEmpty": "No archived reports",
     "archivedEmptyDescription": "Reports you archive will appear here for later reference.",
+    "notFoundTitle": "Report not found",
+    "notFoundDescription": "It may have been deleted or you may no longer have access to it.",
     "form": {
       "titleLabel": "Title",
       "titlePlaceholder": "e.g. Italy trip, Client Acme, January 2026",

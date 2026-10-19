@@ -69,9 +69,6 @@ const ForgotPassword = lazy(() =>
 const ResetPassword = lazy(() =>
   import("../pages/ResetPassword").then(m => ({ default: m.ResetPassword }))
 );
-const LandingPage = lazy(() =>
-  import("../pages/LandingPage").then(m => ({ default: m.LandingPage }))
-);
 const PrivacyPolicy = lazy(() =>
   import("../pages/PrivacyPolicy").then(m => ({ default: m.PrivacyPolicy }))
 );
@@ -213,16 +210,10 @@ export function AppRoutes() {
             </Suspense>
           }
         />
-        <Route
-          path="/"
-          element={
-            <PublicOnlyRoute>
-              <Suspense fallback={standaloneChunkFallback}>
-                <LandingPage />
-              </Suspense>
-            </PublicOnlyRoute>
-          }
-        />
+        {/* The marketing landing is a separate Astro build served by the
+            Bun server at `/` (packages/landing); the SPA never renders it.
+            `/` only answers here for cached/offline navigations. */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route
           path="/privacy"
           element={

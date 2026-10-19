@@ -1,0 +1,90 @@
+---
+import type { LandingStrings } from "../i18n";
+import type { IconName } from "./icon-paths";
+import Icon from "./Icon.astro";
+
+interface Props {
+  strings: LandingStrings;
+}
+
+const { strings } = Astro.props;
+
+const features: { icon: IconName; title: string; description: string }[] = [
+  {
+    icon: "mail",
+    title: strings.features.gmail.title,
+    description: strings.features.gmail.description,
+  },
+  {
+    icon: "sparkles",
+    title: strings.features.ai.title,
+    description: strings.features.ai.description,
+  },
+  {
+    icon: "globe-2",
+    title: strings.features.currency.title,
+    description: strings.features.currency.description,
+  },
+  {
+    icon: "file-text",
+    title: strings.features.documents.title,
+    description: strings.features.documents.description,
+  },
+  {
+    icon: "repeat",
+    title: strings.features.subscriptions.title,
+    description: strings.features.subscriptions.description,
+  },
+  {
+    icon: "shield-check",
+    title: strings.features.security.title,
+    description: strings.features.security.description,
+  },
+];
+---
+
+<section class="py-24 bg-white relative z-10">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1280px]">
+    <div class="text-center mb-16">
+      <h2
+        class="text-4xl md:text-[2.75rem] font-normal text-zinc-900 mb-6 tracking-tight leading-tight reveal-rise"
+      >
+        {strings.features.title}
+        <br class="hidden md:block" />
+        {strings.features.subtitle}
+      </h2>
+      <p class="text-zinc-500 max-w-2xl mx-auto text-lg reveal-rise">
+        {strings.features.description}
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {
+        features.map(feature => (
+          <div class="group relative bg-[#FAFAFA] hover:bg-white border border-zinc-200 hover:border-[var(--button-primary)]/30 transition-colors duration-300 p-8 flex flex-col h-full min-h-[320px] reveal-rise">
+            <div class="flex justify-between items-start w-full mb-auto">
+              <div class="size-12 flex items-center justify-center text-[var(--button-primary)] opacity-90 group-hover:opacity-100 transition-opacity">
+                <Icon name={feature.icon} size={48} strokeWidth={1} />
+              </div>
+              <Icon
+                name="plus"
+                size={16}
+                strokeWidth={1.5}
+                class="size-4 text-zinc-400 group-hover:text-[var(--button-primary)] transition-colors duration-300"
+              />
+            </div>
+
+            <div class="mt-16">
+              <h3 class="text-xl font-medium text-zinc-900 mb-3 tracking-tight">
+                {feature.title}
+              </h3>
+              <p class="text-zinc-500 text-[15px] leading-relaxed">
+                {feature.description}
+              </p>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

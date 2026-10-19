@@ -10,12 +10,31 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - ./packages/frontend/.env
+      # Optional: worktrees may only have .env.local (scripts/sync-env-from-main.sh).
+      - path: ./packages/frontend/.env
+        required: false
     volumes:
       - ./:/app
       - bun_cache:/root/.bun/install/cache
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    environment:
+      # Proxies `/` and `/en/` to the `landing` service so the Astro landing
+      # keeps its HMR loop in dev. The proxy runs server-side in Bun; the HMR
+      # websocket talks to :4321 directly (that port is published below).
+      - LANDING_DEV_URL=http://landing:4321
+
+  landing:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    working_dir: /app/packages/landing
+    command: ["sh", "-lc", "bun install --frozen-lockfile && bun run dev"]
+    ports:
+      - "4321:4321"
+    volumes:
+      - ./:/app
+      - bun_cache:/root/.bun/install/cache
 
   supabase-cli:
     build:
@@ -32,7 +51,8 @@ services:
     tty: true
     stdin_open: true
     env_file:
-      - ./supabase/functions/.env
+      - path: ./supabase/functions/.env
+        required: false
     volumes:
       - ${PROJECT_ROOT}:${PROJECT_ROOT}
       - /var/run/docker.sock:/var/run/docker.sock

@@ -63,6 +63,7 @@ PROJECT_ROOT=$(pwd) docker compose up --build
 This starts:
 
 - The frontend with hot reload at `http://localhost:3000`
+- The landing (Astro) dev server at `http://localhost:4321`, proxied through the frontend at `/`
 - A Supabase local stack (database, auth, edge functions, studio)
 
 No local installation of Bun or Supabase CLI is required.
@@ -113,10 +114,10 @@ Seeds are configured in `supabase/config.toml` as `sql_paths = ["./seeds/*.sql"]
 
 ## Environment variables
 
-| Location                  | Purpose                                         |
-| ------------------------- | ----------------------------------------------- |
-| `packages/frontend/.env`  | Frontend (Supabase URL, anon key, port)         |
-| `supabase/functions/.env` | Edge Functions (OAuth, AI keys, Langfuse, etc.) |
+| Location                  | Purpose                                                           |
+| ------------------------- | ----------------------------------------------------------------- |
+| `packages/frontend/.env`  | Frontend (Supabase URL, anon key, port, `LANDING_DEV_URL` in dev) |
+| `supabase/functions/.env` | Edge Functions (OAuth, AI keys, Langfuse, etc.)                   |
 
 See each `.env.example` for the full list of required variables.
 

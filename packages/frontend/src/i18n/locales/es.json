@@ -19,7 +19,6 @@
     "note": "Nota",
     "refresh": "Actualizar",
     "open": "Abrir",
-    "edit": "Editar",
     "yes": "Sí",
     "no": "No"
   },
@@ -944,75 +943,6 @@
     "unknownError": "Error desconocido",
     "premiumFeature": "Esta es una función premium. Actualizá tu plan para acceder.",
     "usageLimitExceeded": "Llegaste al límite mensual de esta función. Actualizá tu plan para continuar."
-  },
-  "landing": {
-    "hero": {
-      "badge": "Seguimiento Inteligente de Finanzas en Piloto Automático",
-      "titlePart1": "Tus Finanzas,",
-      "titlePart2": "Automatizadas por IA.",
-      "description": "Conectá tu Gmail y dejá que Receiptle extraiga, categorice y haga un seguimiento automático de tus gastos en tiempo real.",
-      "getStarted": "Comenzar Ahora",
-      "readDocs": "Leer Documentación"
-    },
-    "features": {
-      "title": "Todo lo que necesitás para el",
-      "subtitle": "seguimiento automatizado",
-      "description": "Funciones potentes diseñadas para darte visibilidad completa sin la entrada manual de datos.",
-      "gmail": {
-        "title": "Integración con Gmail",
-        "description": "Procesamiento de emails en tiempo real. Dejá de cargar todo a mano y dejá que Receiptle vigile tu bandeja en busca de recibos."
-      },
-      "ai": {
-        "title": "Extracción con IA",
-        "description": "Una IA analiza tus correos y documentos para extraer montos, comercios y fechas con precisión, y categorizar tus gastos automáticamente."
-      },
-      "currency": {
-        "title": "Multi-Moneda",
-        "description": "Seguí gastos en múltiples monedas sin esfuerzo con tasas de cambio en vivo y analíticas comparativas."
-      },
-      "documents": {
-        "title": "Carga de Documentos",
-        "description": "Arrastrá y soltá PDFs e imágenes para extracción instantánea por IA de recibos offline."
-      },
-      "subscriptions": {
-        "title": "Suscripciones",
-        "description": "Detección y monitoreo automático de tus pagos recurrentes y suscripciones digitales."
-      },
-      "security": {
-        "title": "Seguro y Privado",
-        "description": "Acceso de solo lectura a tus emails. Los tokens y datos se cifran en reposo y a nivel de aplicación. Nunca se comparten con terceros."
-      }
-    },
-    "howItWorks": {
-      "title": "Cómo funciona",
-      "description": "Dejá de perder horas de tu vida en hojas de cálculo. Receiptle automatiza las partes tediosas de las finanzas personales para que puedas enfocarte en construir riqueza.",
-      "step1": {
-        "title": "Conectá tu Cuenta",
-        "description": "Vinculá tu Gmail de forma segura mediante OAuth. Solo te pedimos los permisos necesarios para leer los emails de recibos."
-      },
-      "step2": {
-        "title": "Extracción por IA",
-        "description": "Nuestra IA procesa al instante nuevos emails y documentos subidos para extraer información financiera precisa."
-      },
-      "step3": {
-        "title": "Obtené Insights",
-        "description": "Mirá gráficos hermosos, categorizá gastos sin esfuerzo, y tomá el control total de lo que gastás."
-      },
-      "cta": {
-        "title": "¿Listo para verlo en acción?",
-        "description": "Unite hoy y dejá que Receiptle importe los emails de transacciones de tus últimos 3 meses automáticamente.",
-        "button": "Crear cuenta gratuita",
-        "footer": "No requiere tarjeta de crédito. La configuración toma 2 minutos."
-      }
-    },
-    "nav": {
-      "signIn": "Iniciar Sesión",
-      "getStarted": "Comenzar",
-      "documentation": "Documentación",
-      "github": "GitHub",
-      "personalProject": "Proyecto personal.",
-      "privacy": "Privacidad"
-    }
   },
   "filters": {
     "is": "es",

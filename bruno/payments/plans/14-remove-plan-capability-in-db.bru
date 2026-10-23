@@ -11,8 +11,8 @@ delete {
 }
 
 headers {
-  apikey: {{supabaseServiceRoleKey}}
-  Authorization: Bearer {{supabaseServiceRoleKey}}
+  apikey: {{supabaseSecretKey}}
+  Authorization: Bearer {{supabaseSecretKey}}
   Content-Profile: payments
   Prefer: return=representation
 }

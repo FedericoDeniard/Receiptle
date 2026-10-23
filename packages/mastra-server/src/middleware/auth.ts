@@ -16,6 +16,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type { MiddlewareHandler } from "hono";
 import { getRoleFromToken, type UserRole } from "../lib/roles";
+import { requirePublishableKey } from "../lib/supabase-keys";
 
 declare module "hono" {
   interface ContextVariableMap {
@@ -32,7 +33,7 @@ function getSupabaseClient() {
   if (!supabaseClient) {
     supabaseClient = createClient(
       process.env.SUPABASE_URL!,
-      process.env.SUPABASE_ANON_KEY!
+      requirePublishableKey()
     );
   }
   return supabaseClient;

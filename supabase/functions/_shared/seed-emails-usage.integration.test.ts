@@ -10,13 +10,13 @@
  * Why Deno and not bun: this runs against the Supabase local stack
  * (the mastra-server uses Bun but the SQL functions and RLS are in
  * the Supabase container). The test reads SUPABASE_URL and
- * SUPABASE_SERVICE_ROLE_KEY from `supabase/functions/.env` via the
+ * SUPABASE_SECRET_KEY from `supabase/functions/.env` via the
  * `--env-file` flag, mirroring the existing
  * `transaction-agent.integration.test.ts` runner.
  *
  * Required env vars (already in functions/.env):
  *   - SUPABASE_URL
- *   - SUPABASE_SERVICE_ROLE_KEY
+ *   - SUPABASE_SECRET_KEY
  *
  * The helper under test is the same one imported by the
  * mastra-server seed processor (`seed-emails.processor.ts`) and by
@@ -30,15 +30,15 @@ import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { incrementGmailSyncUsage } from "./lib/usage-counter.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+const SUPABASE_SECRET_KEY = Deno.env.get("SUPABASE_SECRET_KEY");
+if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
   throw new Error(
-    "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required to run the seed-emails usage integration tests."
+    "SUPABASE_URL and SUPABASE_SECRET_KEY are required to run the seed-emails usage integration tests."
   );
 }
 
 function serviceClient(): SupabaseClient {
-  return createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!, {
+  return createClient(SUPABASE_URL!, SUPABASE_SECRET_KEY!, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }

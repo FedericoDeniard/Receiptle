@@ -12,6 +12,7 @@ import {
 } from "jsr:@negrel/webpush@0.5";
 import { requireInternalAuth } from "../_shared/auth.ts";
 import { getCorsHeaders, handleCorsPreflightRequest } from "../_shared/cors.ts";
+import { requireSecretKey } from "../_shared/lib/api-keys.ts";
 
 // ─── i18n resolution ─────────────────────────────────────────────────────────
 // The notification rows store i18n keys (e.g. "notifications.templates.seed_completed_with_transactions.title").
@@ -233,7 +234,7 @@ Deno.serve(async req => {
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    requireSecretKey()
   );
 
   try {

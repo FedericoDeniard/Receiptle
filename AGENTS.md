@@ -130,11 +130,13 @@ Three distinct env files, never consolidated:
 
 | File                          | Read by                                               | Notes                                                                                                                                                                                                                                   |
 | ----------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/frontend/.env`      | `src/index.tsx` (Bun auto-loads .env)                 | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `PORT`, `VAPID_PUBLIC_KEY`, `CHAT_ENABLED`, `MASTRA_SERVER_URL`, `APP_URL`, `XAI_API_KEY` (E2E only), `MP_PUBLIC_KEY`, `LANDING_DEV_URL` (dev only: proxies `/` to `astro dev`)                    |
+| `packages/frontend/.env`      | `src/index.tsx` (Bun auto-loads .env)                 | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `PORT`, `VAPID_PUBLIC_KEY`, `CHAT_ENABLED`, `MASTRA_SERVER_URL`, `APP_URL`, `XAI_API_KEY` (E2E only), `MP_PUBLIC_KEY`, `LANDING_DEV_URL` (dev only: proxies `/` to `astro dev`)             |
 | `supabase/functions/.env`     | All Deno edge functions (`--env-file=functions/.env`) | OAuth, `XAI_API_KEY`, `LANGFUSE_*`, `INTERNAL_FUNCTIONS_SECRET`, etc.                                                                                                                                                                   |
 | `packages/mastra-server/.env` | `src/env-loader.ts`                                   | Loaded synchronously because **pnpm strips env vars before forking Bun** — `env-loader.ts` MUST be the first import in `src/server.ts`. Don't use `dotenv`; Bun already auto-loads, but the explicit loader makes the contract visible. |
 
 `INTERNAL_FUNCTIONS_SECRET` must match in `supabase/functions/.env` and in Vault (`vault.decrypted_secrets`). The seed `supabase/seeds/005_internal_functions_secret_local.sql` populates it for local dev. For production, set both the env secret and the Vault secret — they are read by different layers.
+
+Supabase API keys: use publishable/secret keys, not the legacy JWT-based keys. Railway services set `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` (mastra-server needs both). Edge Functions read the platform-injected `SUPABASE_PUBLISHABLE_KEYS` / `SUPABASE_SECRET_KEYS` JSON dictionaries through `supabase/functions/_shared/lib/api-keys.ts`. The publishable key falls back to the legacy anon key for local dev; the secret key has no legacy fallback. Keys are selected by name (`PUBLISHABLE_KEY_NAME` / `SECRET_KEY_NAME`, default `default`).
 
 Worktrees: fresh checkouts don't inherit gitignored env files. Run `bun run env:sync` (`scripts/sync-env-from-main.sh`) to copy the three files above from the primary checkout into the current worktree as `.env.local` (Bun auto-loads `.env.local` over `.env`; `env-loader.ts` reads both). Edge Functions don't auto-load `.env.local`; pass it explicitly: `supabase functions serve --env-file supabase/functions/.env.local`.
 
@@ -162,7 +164,7 @@ Per `.agents/skills/use-realtime`: use `broadcast` (not `postgres_changes`) for 
 - Imports MUST use `jsr:` or `npm:` specifiers, never bare.
 - Shared utilities go in `supabase/functions/_shared/`. **No cross-imports between functions** — only into `_shared/`.
 - Use `Deno.serve` (never `https://deno.land/std/http/server.ts`).
-- All 12 functions have `verify_jwt = false` in `supabase/config.toml` and do their own auth. Public functions (webhooks, auth-callback, health) use `requireInternalAuth(req)` with `INTERNAL_FUNCTIONS_SECRET`. User functions use `requireUserAuth` then `requireMinRole` and `requireCapability` from `_shared/auth.ts` and `_shared/capabilities.ts`.
+- **Edge Functions** (Deno): all 12 functions have `verify_jwt = false` in `supabase/config.toml` and do their own auth. Public functions (webhooks, auth-callback, health) use `requireInternalAuth(req)` with `INTERNAL_FUNCTIONS_SECRET`. User functions use `requireUserAuth` then `requireMinRole` and `requireCapability` from `_shared/auth.ts` and `_shared/capabilities.ts`. Keys come from `SUPABASE_PUBLISHABLE_KEYS` / `SUPABASE_SECRET_KEYS` via `_shared/lib/api-keys.ts`.
 - `process.env` works (Node compat) — shared modules target both Deno edge functions and the Bun mastra-server.
 - File writes only allowed in `/tmp`.
 

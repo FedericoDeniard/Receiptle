@@ -2,6 +2,7 @@
 import { z } from "zod";
 import { stripHtml } from "string-strip-html";
 import { GUARDRAIL_SYSTEM_PROMPT } from "./prompts/guardrail-system";
+import { getSecretKey, isLegacyJwtKey } from "../supabase-keys";
 
 export const GuardrailResponseSchema = z.object({
   shouldProcess: z
@@ -115,13 +116,22 @@ export async function shouldProcessEmail(
     // Call via PostgreSQL http extension, bypassing Deno's TLS fingerprinting.
     // Using direct fetch to REST API to avoid supabase client serialization issues.
     const supabaseUrl = process.env.SUPABASE_URL || "";
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+    const supabaseKey = getSecretKey();
+
+    if (!supabaseUrl || !supabaseKey) {
+      return {
+        shouldProcess: true,
+        reason: "Missing Supabase guardrail configuration, defaulting to allow",
+      };
+    }
 
     const rpcResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/http_post`, {
       method: "POST",
       headers: {
         apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
+        ...(isLegacyJwtKey(supabaseKey)
+          ? { Authorization: `Bearer ${supabaseKey}` }
+          : {}),
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

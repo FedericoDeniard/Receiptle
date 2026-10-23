@@ -14,6 +14,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { handleCorsPreflightRequest, getCorsHeaders } from "../_shared/cors.ts";
+import { requireSecretKey } from "../_shared/lib/api-keys.ts";
 import { getProvider } from "../_shared/lib/payments/index.ts";
 import type {
   NormalizedWebhookEvent,
@@ -86,7 +87,7 @@ Deno.serve(async req => {
   // public-schema version while routing queries to the new schema.
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    requireSecretKey(),
     { db: { schema: "payments" } }
   );
 

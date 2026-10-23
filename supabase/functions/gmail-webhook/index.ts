@@ -1,6 +1,7 @@
 // Gmail Webhook Edge Function - Processes real-time Gmail notifications
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { requireSecretKey } from "../_shared/lib/api-keys.ts";
 import { analyzeDocumentForTransaction } from "../_shared/lib/document-analysis.ts";
 import { saveTransactionAttachments } from "../_shared/lib/transaction-attachments.ts";
 import { getCorsHeaders, handleCorsPreflightRequest } from "../_shared/cors.ts";
@@ -94,7 +95,7 @@ Deno.serve(async req => {
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      requireSecretKey()
     );
 
     // Find ALL user tokens for this Gmail account. We select the encrypted

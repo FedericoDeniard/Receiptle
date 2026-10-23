@@ -4,6 +4,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import { requireMinRole, requireUserAuth } from "../_shared/auth.ts";
 import { requireCapability } from "../_shared/capabilities.ts";
 import { getCorsHeaders, handleCorsPreflightRequest } from "../_shared/cors.ts";
+import { requireSecretKey } from "../_shared/lib/api-keys.ts";
 import { type OAuthTokenRow } from "../_shared/lib/gmail-auth.ts";
 import { decryptTokenRow } from "../_shared/lib/oauth-token-crypto.ts";
 
@@ -61,7 +62,7 @@ Deno.serve(async req => {
     // Use service role for DB operations
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      requireSecretKey()
     );
 
     // Get the token data first and verify ownership. Select the encrypted

@@ -3,6 +3,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { requireInternalAuth } from "../_shared/auth.ts";
 import { getCorsHeaders, handleCorsPreflightRequest } from "../_shared/cors.ts";
+import { requireSecretKey } from "../_shared/lib/api-keys.ts";
 import { createSystemNotification } from "../_shared/notifications.ts";
 import {
   type OAuthTokenRow,
@@ -37,17 +38,11 @@ Deno.serve(async req => {
     }
     console.info("[renew-watches] Internal auth OK");
 
-    // Initialize Supabase with service role key
+    // Initialize Supabase with the secret key
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const hasServiceKey = !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    console.info(
-      `[renew-watches] Supabase URL=${supabaseUrl} hasServiceKey=${hasServiceKey}`
-    );
+    console.info(`[renew-watches] Supabase URL=${supabaseUrl}`);
 
-    const supabase = createClient(
-      supabaseUrl,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const supabase = createClient(supabaseUrl, requireSecretKey());
 
     // -----------------------------------------------------------------------
     // PHASE 1: Proactive token health check

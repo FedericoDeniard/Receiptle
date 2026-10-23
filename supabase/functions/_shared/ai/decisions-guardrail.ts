@@ -22,6 +22,7 @@
 // so the Grok extraction still runs. Mirrors the Gemini guardrail contract.
 import type { GuardrailResponse } from "./guardrail.ts";
 import type { ImageAttachment } from "../lib/attachment-extractor.ts";
+import { getSecretKey, isLegacyJwtKey } from "../lib/api-keys.ts";
 import { prepareEmailForGuardrail } from "./guardrail-input.ts";
 
 const DECISIONS_API_URL = "https://openrouter.ai/api/alpha/decisions";
@@ -203,7 +204,7 @@ async function callDecisionsApi(body: unknown): Promise<DecisionsCallResult> {
   }
 
   const supabaseUrl = process.env.SUPABASE_URL || "";
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  const supabaseKey = getSecretKey();
   if (!supabaseUrl || !supabaseKey) {
     return { ok: false, error: "missing Supabase RPC configuration" };
   }
@@ -221,7 +222,9 @@ async function callDecisionsApi(body: unknown): Promise<DecisionsCallResult> {
       method: "POST",
       headers: {
         apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
+        ...(isLegacyJwtKey(supabaseKey)
+          ? { Authorization: `Bearer ${supabaseKey}` }
+          : {}),
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

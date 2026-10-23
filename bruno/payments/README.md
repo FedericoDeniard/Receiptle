@@ -50,11 +50,25 @@ enabled on multiple providers at different prices:
      https://www.mercadopago.com.ar/developers/panel/app
    - `webhookSecret`: the secret from
      Tus Integraciones → Webhooks → Configurar notificaciones
-   - `supabaseServiceRoleKey`: copy from `SUPABASE_SERVICE_ROLE_KEY`
-     in `supabase/functions/.env`
+   - `supabasePublishableKey`: the publishable key (`sb_publishable_...`)
+     printed by `supabase status` under **Authentication Keys**. If your local
+     stack still uses legacy keys, the local `anon` key also works, but prefer
+     the publishable one.
+   - `supabaseSecretKey`: the secret key (`sb_secret_...`) printed by
+     `supabase status` under **Authentication Keys**. If your local stack still
+     uses legacy keys, the local `service_role` key also works, but prefer the
+     secret one.
    - `loginEmail` / `loginPassword`: credentials of a test user (by
      default the seed is `user@test.com` / `password123` from
      `supabase/seeds/001_auth_test_user.sql`)
+
+   The environment file is gitignored. If it still has the old variable names,
+   rename `supabaseAnonKey` → `supabasePublishableKey` and
+   `supabaseServiceRoleKey` → `supabaseSecretKey`.
+
+   Use the keys from the **local** stack only. Production keys will return
+   401 against `127.0.0.1:54321`.
+
 3. login in bruno (one-time per session):
    - run `0. login` in the `auth/` folder
    - the request uses `loginEmail` / `loginPassword` from the env
@@ -92,10 +106,10 @@ one of two patterns:
   rls context.
 
 - **writes (POST)** with `Content-Profile: payments` and the
-  `supabaseServiceRoleKey` bearer. writing to `payments.plans` and
+  `supabaseSecretKey` bearer. writing to `payments.plans` and
   `payments.plan_provider_variants` is an admin operation, not a
   user-facing action, so it goes through `service_role` which bypasses
-  rls. the service_role key is a Supabase project secret and should
+  rls. the secret key is a Supabase project secret and should
   only be used in trusted tooling like this bruno collection.
 
 the only request that runs as a real user is `subscriptions/cancel
@@ -115,34 +129,34 @@ is unambiguous: "in MP" means it hits mercado pago's api directly,
 "in DB" means it hits our `payments.plans` or `plan_provider_variants`
 table.
 
-| folder           | request                           | what it does                                                                                                                                                                           |
-| ---------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `auth/`          | `0. login`                        | logs in via supabase auth (email + password). captures the access_token into the `userJwt` env var.                                                                                    |
-| `plans/`         | `create plan in MP`               | creates a plan in mp via api. saves `{{mpPlanId}}` to the env.                                                                                                                         |
-| `plans/`         | `list plans in MP`                | lists the plans in your mp account.                                                                                                                                                    |
-| `plans/`         | `get plan in MP`                  | reads a single plan from mp by id.                                                                                                                                                     |
-| `plans/`         | `update plan in MP`               | partial update of a plan in mp. body may include `reason`, `back_url`, and any subset of `auto_recurring` (frequency, amount, currency, free_trial).                                   |
-| `plans/`         | `create plan variant in DB`       | registers a `(plan, provider)` variant — the price for the plan on a specific provider. presence of this row enables the plan on that provider. (writes use `supabaseServiceRoleKey`.) |
-| `plans/`         | `list plan variants in DB`        | lists all variants of a given plan across providers. (reads use `userJwt` + `Accept-Profile: payments`.)                                                                               |
-| `plans/`         | `create plan in DB`               | registers a plan concept in `payments.plans` (no price, no provider). (writes use `supabaseServiceRoleKey`.)                                                                           |
-| `plans/`         | `list plans in DB`                | lists all plans in `payments.plans`. (reads use `userJwt` + `Accept-Profile: payments`.)                                                                                               |
-| `plans/`         | `get plan in DB`                  | reads a single plan from `payments.plans`. (reads use `userJwt` + `Accept-Profile: payments`.)                                                                                         |
-| `plans/`         | `get plan variant in DB`          | reads a specific `(plan_id, provider)` variant. (reads use `userJwt` + `Accept-Profile: payments`.)                                                                                    |
-| `plans/`         | `add plan capability in DB`       | grants a capability to a plan. (writes use `supabaseServiceRoleKey`.)                                                                                                                  |
-| `plans/`         | `list plan capabilities in DB`    | lists the capabilities granted to a single plan. (reads use `userJwt` + `Accept-Profile: payments`.)                                                                                   |
-| `plans/`         | `remove plan capability in DB`    | revokes a capability from a plan. (writes use `supabaseServiceRoleKey`.)                                                                                                               |
-| `subscriptions/` | `health`                          | sanity check that supabase is up.                                                                                                                                                      |
-| `subscriptions/` | `create checkout`                 | looks up the plan's variant in db, calls the provider with the `provider_plan_id`, returns the `initPoint` (the link the user opens to pay).                                           |
-| `subscriptions/` | `get subscription`                | reads a single subscription from mp.                                                                                                                                                   |
-| `subscriptions/` | `list subscriptions`              | lists subscriptions in mp.                                                                                                                                                             |
-| `subscriptions/` | `cancel subscription (edge)`      | user-authenticated: cancels the calling user's subscription via the edge function. mp dispatches a `subscription updated` webhook that the existing handler persists.                  |
-| `subscriptions/` | `cancel subscription (direct MP)` | direct call to mp's `PUT /preapproval/{id}` (utility for forense / manual testing).                                                                                                    |
-| `webhooks/`      | `subscription created`            | mock: fires the "subscription created" event mp would send.                                                                                                                            |
-| `webhooks/`      | `subscription updated`            | mock: fires the "subscription updated" event.                                                                                                                                          |
-| `webhooks/`      | `subscription payment`            | mock: fires the "payment processed" event.                                                                                                                                             |
-| `webhooks/`      | `invalid signature`               | mock: webhook with a tampered hmac.                                                                                                                                                    |
-| `webhooks/`      | `missing signature`               | mock: webhook with no hmac header.                                                                                                                                                     |
-| `webhooks/`      | `unknown provider`                | sanity check that the router rejects unregistered providers.                                                                                                                           |
+| folder           | request                           | what it does                                                                                                                                                                      |
+| ---------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth/`          | `0. login`                        | logs in via supabase auth (email + password). captures the access_token into the `userJwt` env var.                                                                               |
+| `plans/`         | `create plan in MP`               | creates a plan in mp via api. saves `{{mpPlanId}}` to the env.                                                                                                                    |
+| `plans/`         | `list plans in MP`                | lists the plans in your mp account.                                                                                                                                               |
+| `plans/`         | `get plan in MP`                  | reads a single plan from mp by id.                                                                                                                                                |
+| `plans/`         | `update plan in MP`               | partial update of a plan in mp. body may include `reason`, `back_url`, and any subset of `auto_recurring` (frequency, amount, currency, free_trial).                              |
+| `plans/`         | `create plan variant in DB`       | registers a `(plan, provider)` variant — the price for the plan on a specific provider. presence of this row enables the plan on that provider. (writes use `supabaseSecretKey`.) |
+| `plans/`         | `list plan variants in DB`        | lists all variants of a given plan across providers. (reads use `userJwt` + `Accept-Profile: payments`.)                                                                          |
+| `plans/`         | `create plan in DB`               | registers a plan concept in `payments.plans` (no price, no provider). (writes use `supabaseSecretKey`.)                                                                           |
+| `plans/`         | `list plans in DB`                | lists all plans in `payments.plans`. (reads use `userJwt` + `Accept-Profile: payments`.)                                                                                          |
+| `plans/`         | `get plan in DB`                  | reads a single plan from `payments.plans`. (reads use `userJwt` + `Accept-Profile: payments`.)                                                                                    |
+| `plans/`         | `get plan variant in DB`          | reads a specific `(plan_id, provider)` variant. (reads use `userJwt` + `Accept-Profile: payments`.)                                                                               |
+| `plans/`         | `add plan capability in DB`       | grants a capability to a plan. (writes use `supabaseSecretKey`.)                                                                                                                  |
+| `plans/`         | `list plan capabilities in DB`    | lists the capabilities granted to a single plan. (reads use `userJwt` + `Accept-Profile: payments`.)                                                                              |
+| `plans/`         | `remove plan capability in DB`    | revokes a capability from a plan. (writes use `supabaseSecretKey`.)                                                                                                               |
+| `subscriptions/` | `health`                          | sanity check that supabase is up.                                                                                                                                                 |
+| `subscriptions/` | `create checkout`                 | looks up the plan's variant in db, calls the provider with the `provider_plan_id`, returns the `initPoint` (the link the user opens to pay).                                      |
+| `subscriptions/` | `get subscription`                | reads a single subscription from mp.                                                                                                                                              |
+| `subscriptions/` | `list subscriptions`              | lists subscriptions in mp.                                                                                                                                                        |
+| `subscriptions/` | `cancel subscription (edge)`      | user-authenticated: cancels the calling user's subscription via the edge function. mp dispatches a `subscription updated` webhook that the existing handler persists.             |
+| `subscriptions/` | `cancel subscription (direct MP)` | direct call to mp's `PUT /preapproval/{id}` (utility for forense / manual testing).                                                                                               |
+| `webhooks/`      | `subscription created`            | mock: fires the "subscription created" event mp would send.                                                                                                                       |
+| `webhooks/`      | `subscription updated`            | mock: fires the "subscription updated" event.                                                                                                                                     |
+| `webhooks/`      | `subscription payment`            | mock: fires the "payment processed" event.                                                                                                                                        |
+| `webhooks/`      | `invalid signature`               | mock: webhook with a tampered hmac.                                                                                                                                               |
+| `webhooks/`      | `missing signature`               | mock: webhook with no hmac header.                                                                                                                                                |
+| `webhooks/`      | `unknown provider`                | sanity check that the router rejects unregistered providers.                                                                                                                      |
 
 ## end-to-end flow
 

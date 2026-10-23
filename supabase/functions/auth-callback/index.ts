@@ -2,6 +2,10 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { handleCorsPreflightRequest } from "../_shared/cors.ts";
+import {
+  requirePublishableKey,
+  requireSecretKey,
+} from "../_shared/lib/api-keys.ts";
 import { encryptSecret } from "../_shared/lib/oauth-token-crypto.ts";
 
 Deno.serve(async req => {
@@ -58,7 +62,7 @@ Deno.serve(async req => {
     // State contains the Supabase JWT token - extract user_id from it
     const supabaseAuth = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      requirePublishableKey()
     );
     const {
       data: { user: authUser },
@@ -170,7 +174,7 @@ Deno.serve(async req => {
     // Save to database
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      requireSecretKey()
     );
 
     // Encrypt the new tokens before persistence. The encryption key never

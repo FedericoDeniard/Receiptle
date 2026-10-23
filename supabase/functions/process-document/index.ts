@@ -4,6 +4,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import { requireMinRole, requireUserAuth } from "../_shared/auth.ts";
 import { requireCapability } from "../_shared/capabilities.ts";
 import { getCorsHeaders, handleCorsPreflightRequest } from "../_shared/cors.ts";
+import { requireSecretKey } from "../_shared/lib/api-keys.ts";
 import { analyzeDocumentForTransaction } from "../_shared/lib/document-analysis.ts";
 import { saveTransactionAttachments } from "../_shared/lib/transaction-attachments.ts";
 
@@ -49,7 +50,7 @@ Deno.serve(async req => {
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      requireSecretKey()
     );
 
     // Usage cap. admin bypasses (effectively unlimited); everyone

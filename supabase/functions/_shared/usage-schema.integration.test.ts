@@ -23,8 +23,7 @@
  *
  * Required env vars (already in functions/.env):
  *   - SUPABASE_URL
- *   - SUPABASE_SERVICE_ROLE_KEY
- *   - SUPABASE_ANON_KEY
+ *   - SUPABASE_SECRET_KEY
  *
  * This test does NOT mutate state — it only reads.
  *
@@ -34,15 +33,15 @@ import { assert } from "jsr:@std/assert";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+const SUPABASE_SECRET_KEY = Deno.env.get("SUPABASE_SECRET_KEY");
+if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
   throw new Error(
-    "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required to run the usage-schema integration tests."
+    "SUPABASE_URL and SUPABASE_SECRET_KEY are required to run the usage-schema integration tests."
   );
 }
 
 function serviceClient(): SupabaseClient {
-  return createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!, {
+  return createClient(SUPABASE_URL!, SUPABASE_SECRET_KEY!, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }

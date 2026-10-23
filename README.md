@@ -114,22 +114,52 @@ Seeds are configured in `supabase/config.toml` as `sql_paths = ["./seeds/*.sql"]
 
 ## Environment variables
 
-| Location                  | Purpose                                                           |
-| ------------------------- | ----------------------------------------------------------------- |
-| `packages/frontend/.env`  | Frontend (Supabase URL, anon key, port, `LANDING_DEV_URL` in dev) |
-| `supabase/functions/.env` | Edge Functions (OAuth, AI keys, Langfuse, etc.)                   |
+| Location                  | Purpose                                                                  |
+| ------------------------- | ------------------------------------------------------------------------ |
+| `packages/frontend/.env`  | Frontend (Supabase URL, publishable key, port, `LANDING_DEV_URL` in dev) |
+| `supabase/functions/.env` | Edge Functions (OAuth, AI keys, Langfuse, etc.)                          |
 
 See each `.env.example` for the full list of required variables.
 
+Local `.env` keys must come from `supabase status` (Authentication Keys) for the
+local stack. Production keys only go in Railway variables or Supabase Edge
+Function secrets; hosted Edge Functions receive `SUPABASE_*` variables from the
+platform.
+
 ## Production secrets checklist
+
+### Supabase-provided variables (do not set manually)
+
+Edge Functions get these injected by the platform. Secret names starting with
+`SUPABASE_` are reserved and rejected by the Dashboard/Management API:
+
+- `SUPABASE_URL`
+- `SUPABASE_PUBLISHABLE_KEYS` (JSON dictionary of publishable keys)
+- `SUPABASE_SECRET_KEYS` (JSON dictionary of secret keys)
+- `SUPABASE_JWKS`
+
+The Edge Functions read the publishable/secret keys through
+`_shared/lib/api-keys.ts`. The publishable key falls back to the legacy anon key
+for local development; the secret key has no legacy fallback and must be set
+before deploying. Keys are selected by name from the injected dictionaries:
+`PUBLISHABLE_KEY_NAME` and `SECRET_KEY_NAME` default to `default`. If the named
+key is missing, the function fails with a clear error instead of picking an
+arbitrary key. If your only secret key is not named `default` (for example
+`railway_brod`), set `SECRET_KEY_NAME` as an Edge Function secret before
+deploying, or create a `default` secret key.
+
+### Railway services
+
+Set these on the Railway services:
+
+- Frontend: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`
+- Mastra server: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`,
+  `SUPABASE_SECRET_KEY`
 
 ### Edge Functions secrets (remote)
 
 Set these in your remote project (Dashboard or CLI):
 
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
 - `FRONTEND_URL`
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
@@ -147,14 +177,13 @@ Set these in your remote project (Dashboard or CLI):
 - `CORS_ALLOWED_ORIGINS`
 - `CORS_ALLOW_CREDENTIALS`
 - `INTERNAL_FUNCTIONS_SECRET`
+- `PUBLISHABLE_KEY_NAME` / `SECRET_KEY_NAME` (optional; only if your keys are
+  not named `default`)
 
 Example with CLI:
 
 ```bash
 supabase secrets set \
-  SUPABASE_URL=... \
-  SUPABASE_ANON_KEY=... \
-  SUPABASE_SERVICE_ROLE_KEY=... \
   FRONTEND_URL=... \
   GOOGLE_CLIENT_ID=... \
   GOOGLE_CLIENT_SECRET=... \
@@ -238,6 +267,6 @@ Inside the container you have full access to the Supabase CLI without installing
 
 - Use **service names** with `docker compose exec` (e.g. `frontend`, `supabase-cli`), not container names.
 - Run compose commands with `PROJECT_ROOT=$(pwd)` (already included in `bun run docker:*` scripts). This keeps host and in-container paths identical so Supabase nested Docker mounts work on both macOS and Linux.
-- If the frontend fails to load config, verify that `packages/frontend/.env` exists and has valid `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
+- If the frontend fails to load config, verify that `packages/frontend/.env` exists and has valid `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`.
 - Stream frontend logs with `docker compose logs -f frontend`.
 - The frontend Docker image is pinned to `oven/bun:1.3.9` for runtime parity with local development.

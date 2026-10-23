@@ -2,14 +2,13 @@
 // No business logic, no error handling, no notifications — just data access.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { decryptTokenRow } from "../../lib/seed-shared/oauth-token-crypto";
+import { requireSecretKey } from "../../lib/supabase-keys";
 import type { ConnectionRow, SeedRow } from "./seed-emails.types";
 
 export function createServiceClient(): SupabaseClient {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
+  return createClient(process.env.SUPABASE_URL!, requireSecretKey(), {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
 }
 
 export async function findActiveConnection(

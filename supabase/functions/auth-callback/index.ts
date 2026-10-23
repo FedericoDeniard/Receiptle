@@ -22,7 +22,7 @@ Deno.serve(async req => {
 
     // Debug logs
     console.log("OAuth Callback Debug:");
-    console.log("  URL:", req.url);
+    console.log("  Path:", url.pathname);
     console.log("  Code:", code ? "present" : "missing");
     console.log("  State:", state ? "present" : "missing");
     console.log("  Error:", error || "none");

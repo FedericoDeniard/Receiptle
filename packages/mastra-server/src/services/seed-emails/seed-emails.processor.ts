@@ -31,6 +31,8 @@ export interface ChunkResult {
   processed: number;
   transactions: number;
   total: number;
+  skipped: number;
+  aiProcessed: number;
 }
 
 interface ProcessorDeps {
@@ -52,6 +54,8 @@ export async function processChunk(
       processed: seed.last_processed_index ?? 0,
       transactions: seed.transactions_found ?? 0,
       total: seed.total_emails ?? 0,
+      skipped: seed.total_skipped ?? 0,
+      aiProcessed: seed.emails_processed_by_ai ?? 0,
     };
   }
 
@@ -61,7 +65,14 @@ export async function processChunk(
   const chunk = messageIds.slice(startIndex, endIndex);
 
   if (chunk.length === 0) {
-    return { done: true, processed: 0, transactions: 0, total: 0 };
+    return {
+      done: true,
+      processed: 0,
+      transactions: 0,
+      total: 0,
+      skipped: seed.total_skipped ?? 0,
+      aiProcessed: seed.emails_processed_by_ai ?? 0,
+    };
   }
 
   await ensureFreshAccessToken(deps.supabase, deps.tokenData, "seed_chunk");
@@ -72,22 +83,26 @@ export async function processChunk(
     `[seed-processor] Processing chunk: messages ${startIndex}-${endIndex - 1} of ${messageIds.length}`
   );
 
-  const { transactionsFound, processedCount } = await processChunkBatch({
-    supabase: deps.supabase,
-    tokenData: deps.tokenData,
-    userId: deps.userId,
-    userRole: deps.userRole,
-    tokenId: deps.tokenData.id,
-    messageIds: chunk,
-    userFullName,
-    startingTransactionsFound: seed.transactions_found ?? 0,
-  });
+  const { transactionsFound, processedCount, skippedCount, aiProcessedCount } =
+    await processChunkBatch({
+      supabase: deps.supabase,
+      tokenData: deps.tokenData,
+      userId: deps.userId,
+      userRole: deps.userRole,
+      tokenId: deps.tokenData.id,
+      messageIds: chunk,
+      userFullName,
+      startingTransactionsFound: seed.transactions_found ?? 0,
+    });
+
+  const skipped = (seed.total_skipped ?? 0) + skippedCount;
+  const aiProcessed = (seed.emails_processed_by_ai ?? 0) + aiProcessedCount;
 
   const newIndex = endIndex;
   const isDone = newIndex >= messageIds.length;
 
   console.log(
-    `[seed-processor] Chunk done: ${processedCount} processed, ${transactionsFound} transactions, ${isDone ? "COMPLETED" : `${messageIds.length - newIndex} remaining`}`
+    `[seed-processor] Chunk done: ${processedCount} processed (${aiProcessedCount} by AI, ${skippedCount} skipped), ${transactionsFound} transactions, ${isDone ? "COMPLETED" : `${messageIds.length - newIndex} remaining`}`
   );
 
   if (isDone) {
@@ -118,6 +133,8 @@ export async function processChunk(
     processed: newIndex,
     transactions: transactionsFound,
     total: messageIds.length,
+    skipped,
+    aiProcessed,
   };
 }
 
@@ -180,11 +197,18 @@ interface BatchDeps {
   startingTransactionsFound: number;
 }
 
-async function processChunkBatch(
-  deps: BatchDeps
-): Promise<{ transactionsFound: number; processedCount: number }> {
+interface ChunkBatchResult {
+  transactionsFound: number;
+  processedCount: number;
+  skippedCount: number;
+  aiProcessedCount: number;
+}
+
+async function processChunkBatch(deps: BatchDeps): Promise<ChunkBatchResult> {
   let transactionsFound = deps.startingTransactionsFound;
   let processedCount = 0;
+  let skippedCount = 0;
+  let aiProcessedCount = 0;
 
   for (let i = 0; i < deps.messageIds.length; i += CONCURRENCY) {
     const batch = deps.messageIds.slice(i, i + CONCURRENCY);
@@ -209,18 +233,24 @@ async function processChunkBatch(
             `[seed-processor] Error processing ${messageId}:`,
             error
           );
-          return { transactionFound: false };
+          return {
+            transactionFound: false,
+            skipped: false,
+            aiProcessed: false,
+          };
         }
       })
     );
 
     for (const result of results) {
       if (result.transactionFound) transactionsFound++;
+      if (result.skipped) skippedCount++;
+      if (result.aiProcessed) aiProcessedCount++;
       processedCount++;
     }
   }
 
-  return { transactionsFound, processedCount };
+  return { transactionsFound, processedCount, skippedCount, aiProcessedCount };
 }
 
 interface MessageDeps {
@@ -233,9 +263,27 @@ interface MessageDeps {
   userFullName: string | undefined;
 }
 
-async function processSingleMessage(
-  deps: MessageDeps
-): Promise<{ transactionFound: boolean }> {
+interface MessageResult {
+  transactionFound: boolean;
+  skipped: boolean;
+  aiProcessed: boolean;
+}
+
+async function processSingleMessage(deps: MessageDeps): Promise<MessageResult> {
+  // Dedupe before fetching the full message: transactions and discarded_emails
+  // are the record of emails already analyzed. Checking first avoids one Gmail
+  // API call per already-processed email on every re-run.
+  if (
+    (await findExistingTransaction(
+      deps.supabase,
+      deps.tokenId,
+      deps.messageId
+    )) ||
+    (await findExistingDiscarded(deps.supabase, deps.tokenId, deps.messageId))
+  ) {
+    return { transactionFound: false, skipped: true, aiProcessed: false };
+  }
+
   const response = await fetchGmailWithRecovery(
     deps.supabase,
     deps.tokenData,
@@ -257,20 +305,13 @@ async function processSingleMessage(
   };
   const gmailId = message.id || deps.messageId;
 
-  if (await findExistingTransaction(deps.supabase, deps.tokenId, gmailId)) {
-    return { transactionFound: false };
-  }
-  if (await findExistingDiscarded(deps.supabase, deps.tokenId, gmailId)) {
-    return { transactionFound: false };
-  }
-
   const labelIds: string[] = message.labelIds || [];
   if (
     !labelIds.includes("INBOX") ||
     labelIds.includes("SPAM") ||
     labelIds.includes("TRASH")
   ) {
-    return { transactionFound: false };
+    return { transactionFound: false, skipped: true, aiProcessed: false };
   }
 
   const headers = message.payload?.headers || [];
@@ -330,7 +371,11 @@ async function processSingleMessage(
         subject,
       });
       if (duplicate || !inserted) {
-        return { transactionFound: false };
+        return {
+          transactionFound: false,
+          skipped: duplicate,
+          aiProcessed: true,
+        };
       }
       // Counted AFTER successful insert (matches the export-report-pdf
       // pattern: only count when the work actually produced a row).
@@ -341,7 +386,7 @@ async function processSingleMessage(
       await incrementGmailSyncUsage(deps.supabase, deps.userId, deps.userRole, {
         messageId: deps.messageId,
       });
-      return { transactionFound: true };
+      return { transactionFound: true, skipped: false, aiProcessed: true };
     }
 
     await insertDiscarded(deps.supabase, {
@@ -360,7 +405,7 @@ async function processSingleMessage(
     console.error("[seed-processor] AI processing error:", error);
   }
 
-  return { transactionFound: false };
+  return { transactionFound: false, skipped: false, aiProcessed: true };
 }
 
 function extractBodyText(payload: unknown): string {

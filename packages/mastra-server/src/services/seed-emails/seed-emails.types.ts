@@ -77,6 +77,8 @@ export interface SeedRow {
   total_emails: number | null;
   last_processed_index: number | null;
   transactions_found: number | null;
+  total_skipped: number | null;
+  emails_processed_by_ai: number | null;
   error_message: string | null;
   updated_at: string | null;
 }

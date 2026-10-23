@@ -146,6 +146,8 @@ async function runBackgroundJob(input: BackgroundJobInput): Promise<void> {
           status: isDone ? "completed" : "processing",
           lastProcessedIndex: lastResult.processed,
           transactionsFound: lastResult.transactions,
+          totalSkipped: lastResult.skipped,
+          emailsProcessedByAi: lastResult.aiProcessed,
         });
       } catch (chunkError) {
         await handleChunkFailure(supabase, seed, userId, chunkError);

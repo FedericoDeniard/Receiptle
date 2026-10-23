@@ -65,6 +65,8 @@ export async function createSeed(
       message_ids: data.messageIds,
       total_emails: data.messageIds.length,
       last_processed_index: 0,
+      total_skipped: 0,
+      emails_processed_by_ai: 0,
     })
     .select()
     .single();
@@ -97,6 +99,8 @@ export async function updateSeedProgress(
     status: "processing" | "completed" | "failed";
     lastProcessedIndex: number;
     transactionsFound: number;
+    totalSkipped: number;
+    emailsProcessedByAi: number;
   }
 ): Promise<void> {
   const { error } = await supabase
@@ -104,7 +108,8 @@ export async function updateSeedProgress(
     .update({
       status: update.status,
       last_processed_index: update.lastProcessedIndex,
-      emails_processed_by_ai: update.lastProcessedIndex,
+      emails_processed_by_ai: update.emailsProcessedByAi,
+      total_skipped: update.totalSkipped,
       transactions_found: update.transactionsFound,
       updated_at: new Date().toISOString(),
     })

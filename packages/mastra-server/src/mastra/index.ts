@@ -4,6 +4,7 @@ import { PostgresStore } from "@mastra/pg";
 import { MastraAuthSupabase } from "@mastra/auth-supabase";
 import { financialAgent } from "./agents/financial-agent";
 import { topicClassifier } from "./classifiers/topic";
+import { requirePublishableKey } from "../lib/supabase-keys";
 
 const supabaseDbUrl = process.env.SUPABASE_DB_URL;
 if (supabaseDbUrl) {
@@ -49,7 +50,7 @@ export const mastra = new Mastra({
       }),
       new MastraAuthSupabase({
         url: process.env.SUPABASE_URL!,
-        anonKey: process.env.SUPABASE_ANON_KEY!,
+        anonKey: requirePublishableKey(),
         authorizeUser: async () => true,
         mapUserToResourceId: user => user.id,
         protected: ["/api/agents/*", "/chat/*"],

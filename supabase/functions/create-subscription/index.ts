@@ -18,6 +18,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { handleCorsPreflightRequest, getCorsHeaders } from "../_shared/cors.ts";
+import { requireSecretKey } from "../_shared/lib/api-keys.ts";
 import { requireMinRole, requireUserAuth } from "../_shared/auth.ts";
 import { getProvider, isKnownProvider } from "../_shared/lib/payments/index.ts";
 
@@ -81,7 +82,7 @@ Deno.serve(async req => {
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    requireSecretKey(),
     { db: { schema: "payments" } }
   );
 

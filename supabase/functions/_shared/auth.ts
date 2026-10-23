@@ -1,4 +1,5 @@
 import { createClient, type User } from "jsr:@supabase/supabase-js@2";
+import { requirePublishableKey } from "./lib/api-keys.ts";
 import {
   FEATURES,
   VALID_ROLES,
@@ -39,7 +40,7 @@ async function getUserFromToken(token: string): Promise<User | null> {
     // shared module works in Supabase Edge Functions (Deno) and the
     // mastr-server (Bun). Deno supports process.env via Node compat.
     process.env.SUPABASE_URL ?? "",
-    process.env.SUPABASE_ANON_KEY ?? ""
+    requirePublishableKey()
   );
 
   const {

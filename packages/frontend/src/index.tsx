@@ -4,9 +4,11 @@ import { join } from "path";
 import devIndex from "./index.html";
 
 // Log environment variables on startup
+const supabasePublishableKey =
+  process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
 console.log("Environment variables loaded:");
 console.log("SUPABASE_URL:", process.env.SUPABASE_URL ? "✓" : "✗");
-console.log("SUPABASE_ANON_KEY:", process.env.SUPABASE_ANON_KEY ? "✓" : "✗");
+console.log("SUPABASE_PUBLISHABLE_KEY:", supabasePublishableKey ? "✓" : "✗");
 console.log("VAPID_PUBLIC_KEY:", process.env.VAPID_PUBLIC_KEY ? "✓" : "✗");
 console.log(
   "Edge Functions URL:",
@@ -359,7 +361,7 @@ const server = serve({
       const config = {
         supabase: {
           url: (process.env.SUPABASE_URL || "").replace(/\/+$/, ""),
-          anonKey: process.env.SUPABASE_ANON_KEY,
+          anonKey: supabasePublishableKey,
         },
         backendUrl: `${(process.env.SUPABASE_URL || "").replace(/\/+$/, "")}/functions/v1`,
         // Standalone Mastra server URL (chat / agents).

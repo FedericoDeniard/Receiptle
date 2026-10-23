@@ -70,7 +70,7 @@ if (foundFiles.length === 0) {
   console.warn(`[env-loader] no .env or .env.local found at ${process.cwd()}`);
 } else if (process.env.OPENROUTER_API_KEY) {
   console.log(
-    `[env-loader] loaded ${loaded} vars from ${origin}; OPENROUTER_API_KEY prefix=${process.env.OPENROUTER_API_KEY.substring(0, 15)}, length=${process.env.OPENROUTER_API_KEY.length}`
+    `[env-loader] loaded ${loaded} vars from ${origin}; OPENROUTER_API_KEY is set`
   );
 } else {
   console.warn(

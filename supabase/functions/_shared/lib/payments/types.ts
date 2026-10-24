@@ -24,11 +24,11 @@ export interface UpdatePlanInput {
   // mapped to the provider's free-trial field. only set if > 0.
   trialDays?: number;
   backUrl?: string;
-  // mp-specific: stamps a per-user identifier on the plan. when mp
-  // creates the preapproval server-side on hosted-checkout payment, it
-  // propagates this to the preapproval so the webhook carries it back.
-  // not in the documented create/update params, but accepted and
-  // returned by the api — see create-subscription/index.ts.
+  // mp-specific: stamps a per-user identifier on the plan. mp does not
+  // reliably propagate it to the preapproval created by the hosted
+  // checkout, so payments-webhook also recovers the user from the
+  // payment's external_reference. not in the documented create/update
+  // params, but accepted and returned by the api.
   externalReference?: string;
 }
 
@@ -64,6 +64,11 @@ export interface SubscriptionDetails {
   // the id of that plan in mp. lets the webhook resolve plan_id in our db.
   preapprovalPlanId: string | null;
   raw: unknown;
+}
+
+export interface PaymentDetails {
+  externalReference: string | null;
+  payerEmail: string | null;
 }
 
 export type WebhookVerification =

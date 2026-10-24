@@ -75,6 +75,21 @@ export type AuthorizedPaymentResponse = z.infer<
   typeof authorizedPaymentResponseSchema
 >;
 
+// ─── /v1/payments/{id} response ──────────────────────────────────────────────
+// only the fields the webhook needs to recover the app user when mp does not
+// propagate the plan's external_reference to the preapproval.
+
+export const paymentResponseSchema = z.object({
+  id: z.number(),
+  external_reference: z.string().optional().nullable(),
+  payer: z
+    .object({
+      email: z.string().optional().nullable(),
+    })
+    .optional()
+    .nullable(),
+});
+
 // ─── update preapproval plan response (PUT /preapproval_plan/{id}) ────────
 // the response shape mirrors the create-preapproval-plan response plus a
 // `last_modified` timestamp. we only validate the fields the caller reads

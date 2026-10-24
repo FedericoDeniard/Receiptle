@@ -9,6 +9,7 @@ export interface MPConfig {
   backUrl: string;
   siteId: string;
   notificationUrl: string;
+  apiBaseUrl: string;
 }
 
 let cached: MPConfig | null = null;
@@ -31,6 +32,8 @@ export function getMPConfig(): MPConfig {
     backUrl: Deno.env.get("MP_BACK_URL") ?? "http://localhost:3000/billing",
     siteId: Deno.env.get("MP_SITE_ID") ?? "MLA",
     notificationUrl: requireEnv("MP_NOTIFICATION_URL"),
+    apiBaseUrl:
+      Deno.env.get("MP_API_BASE_URL") ?? "https://api.mercadopago.com",
   };
   return cached;
 }

@@ -18,6 +18,7 @@ import { requireSecretKey } from "../_shared/lib/api-keys.ts";
 import { getProvider } from "../_shared/lib/payments/index.ts";
 import type {
   NormalizedWebhookEvent,
+  PaymentDetails,
   WebhookVerification,
 } from "../_shared/lib/payments/types.ts";
 
@@ -255,18 +256,22 @@ async function processEvent(
 
     case "subscription.payment": {
       // resolve the underlying preapproval id from the authorized_payment id,
-      // then enrich the event row. we do not touch `subscriptions` here because
-      // alpha does not track per-payment state on the subscription row.
+      // then enrich the event row. also link the subscription to the app user
+      // using the payment's external_reference: mp does not reliably propagate
+      // the plan's external_reference to the preapproval, so the preapproval
+      // event can arrive with user_id null and the payment is the only place
+      // that carries the value we stamped at checkout.
       if (!event.providerPaymentId) {
         throw new Error("payment event without providerPaymentId");
       }
-      // getAuthorizedPayment is mercadopago-specific for now. keep the dispatch
-      // generic by feature-detecting the method.
+      // getAuthorizedPayment/getPayment are mercadopago-specific for now. keep
+      // the dispatch generic by feature-detecting the methods.
       const maybeClient = provider as unknown as {
         getAuthorizedPayment?: (id: string | number) => Promise<{
           preapproval_id: string | null;
           payment_id: number | null;
         } | null>;
+        getPayment?: (id: string | number) => Promise<PaymentDetails | null>;
       };
       if (typeof maybeClient.getAuthorizedPayment !== "function") {
         console.info(
@@ -283,6 +288,133 @@ async function processEvent(
           .update({ provider_subscription_id: authPayment.preapproval_id })
           .eq("id", eventId);
       }
+
+      if (!authPayment?.preapproval_id) {
+        console.warn(
+          "[payments-webhook] authorized payment has no preapproval_id; cannot link user",
+          { authorizedPaymentId: event.providerPaymentId }
+        );
+        return;
+      }
+      if (
+        !authPayment.payment_id ||
+        typeof maybeClient.getPayment !== "function"
+      ) {
+        console.warn(
+          "[payments-webhook] authorized payment has no payment_id; cannot link user",
+          {
+            preapprovalId: authPayment.preapproval_id,
+            authorizedPaymentId: event.providerPaymentId,
+          }
+        );
+        return;
+      }
+
+      const payment = await maybeClient.getPayment(authPayment.payment_id);
+      if (!payment) {
+        throw new Error(
+          `MP payment ${authPayment.payment_id} not found while linking subscription ${authPayment.preapproval_id}`
+        );
+      }
+      const externalReference = payment.externalReference;
+      const userId = asUserId(externalReference);
+      if (!externalReference || !userId) {
+        console.info(
+          "[payments-webhook] payment has no usable external_reference; leaving user_id untouched",
+          {
+            preapprovalId: authPayment.preapproval_id,
+            paymentId: authPayment.payment_id,
+          }
+        );
+        return;
+      }
+
+      const update: Record<string, unknown> = {
+        user_id: userId,
+        external_reference: externalReference,
+      };
+      if (payment.payerEmail) {
+        update.payer_email = payment.payerEmail;
+      }
+
+      // only fill user_id when it is still empty: the plan-level
+      // external_reference is a single field and a stale payment could carry
+      // another user's id under concurrent checkouts.
+      const { data: updated, error: updateError } = await supabase
+        .from("subscriptions")
+        .update(update)
+        .eq("provider", providerName)
+        .eq("provider_subscription_id", authPayment.preapproval_id)
+        .is("user_id", null)
+        .select("id");
+
+      if (updateError) {
+        throw new Error(
+          `Failed to link subscription to user: ${updateError.message}`
+        );
+      }
+
+      if (updated && updated.length > 0) {
+        console.info("[payments-webhook] linked subscription to user", {
+          preapprovalId: authPayment.preapproval_id,
+          paymentId: authPayment.payment_id,
+          userId,
+        });
+        return;
+      }
+
+      const { data: existing, error: existingError } = await supabase
+        .from("subscriptions")
+        .select("id, user_id")
+        .eq("provider", providerName)
+        .eq("provider_subscription_id", authPayment.preapproval_id)
+        .maybeSingle();
+
+      if (existingError) {
+        throw new Error(
+          `Failed to inspect subscription before linking: ${existingError.message}`
+        );
+      }
+
+      if (existing) {
+        if (existing.user_id && existing.user_id !== userId) {
+          console.warn(
+            "[payments-webhook] subscription already linked to another user; leaving it untouched",
+            {
+              preapprovalId: authPayment.preapproval_id,
+              existingUserId: existing.user_id,
+              paymentUserId: userId,
+            }
+          );
+        }
+        return;
+      }
+
+      // event order is not guaranteed: if the subscription row does not exist
+      // yet, fetch the preapproval and upsert it with the recovered user.
+      const details = await provider.getSubscription(
+        authPayment.preapproval_id
+      );
+      if (!details) {
+        throw new Error(
+          `MP preapproval ${authPayment.preapproval_id} not found while linking subscription`
+        );
+      }
+      await upsertSubscription(
+        supabase,
+        providerName,
+        authPayment.preapproval_id,
+        {
+          ...details,
+          externalReference,
+          payerEmail: details.payerEmail ?? payment.payerEmail ?? null,
+        }
+      );
+      console.info("[payments-webhook] created and linked subscription", {
+        preapprovalId: authPayment.preapproval_id,
+        paymentId: authPayment.payment_id,
+        userId,
+      });
       return;
     }
 
@@ -331,10 +463,20 @@ async function upsertSubscription(
     planId = variant?.plan_id ?? null;
   }
 
-  // resolve user_id from external_reference. we stamped our user.id
-  // into the plan's external_reference in create-subscription, so the
-  // webhook carries our user_id back to us as a uuid. no auth lookup.
-  const userId = resolveUserId(details.externalReference);
+  // preserve an existing link: later preapproval events may omit the
+  // external_reference, and those must not un-link a subscription that the
+  // payment event already linked. same for payer_email.
+  const { data: existing } = await supabase
+    .from("subscriptions")
+    .select("user_id, payer_email, external_reference")
+    .eq("provider", providerName)
+    .eq("provider_subscription_id", providerSubscriptionId)
+    .maybeSingle();
+
+  const userId = existing?.user_id ?? asUserId(details.externalReference);
+  const payerEmail = details.payerEmail || existing?.payer_email || null;
+  const externalReference =
+    details.externalReference || existing?.external_reference || null;
 
   const { error } = await supabase.from("subscriptions").upsert(
     {
@@ -342,12 +484,12 @@ async function upsertSubscription(
       provider_subscription_id: providerSubscriptionId,
       status: details.status,
       reason: details.reason,
-      payer_email: details.payerEmail,
+      payer_email: payerEmail,
       frequency: details.frequency,
       frequency_type: details.frequencyType,
       transaction_amount: details.transactionAmount,
       currency_id: details.currencyId,
-      external_reference: details.externalReference,
+      external_reference: externalReference,
       auto_recurring: details.autoRecurring as Record<string, unknown> | null,
       plan_id: planId,
       user_id: userId,
@@ -364,15 +506,13 @@ async function upsertSubscription(
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-// we stamp our user.id into the plan's external_reference right before
-// redirecting the user to mp's hosted checkout (see create-subscription).
-// mp propagates that value to the resulting preapproval and the
-// subscription_preapproval webhook carries it back. so the webhook's
-// external_reference IS our user_id — no lookup needed.
+// mp does not reliably propagate the plan's external_reference to the
+// preapproval. the webhook also recovers it from the payment's
+// external_reference. validate it before using it as an auth user id.
 //
 // payer_email is kept as a column on payments.subscriptions (for
 // reconciliation / debugging) but it is not used to resolve user_id.
-function resolveUserId(externalReference: string | null): string | null {
+function asUserId(externalReference: string | null): string | null {
   if (!externalReference) return null;
   if (!UUID_RE.test(externalReference)) return null;
   return externalReference;

@@ -359,26 +359,32 @@ async function processEvent(
       // only fill user_id when it is still empty: the plan-level
       // external_reference is a single field and a stale payment could carry
       // another user's id under concurrent checkouts.
-      const { data: updated, error: updateError } = await supabase
-        .from("subscriptions")
-        .update(update)
-        .eq("provider", providerName)
-        .eq("provider_subscription_id", authPayment.preapprovalId)
-        .is("user_id", null)
-        .select("id");
+      const linkUnlinkedSubscription = async (): Promise<boolean> => {
+        const { data: updated, error: updateError } = await supabase
+          .from("subscriptions")
+          .update(update)
+          .eq("provider", providerName)
+          .eq("provider_subscription_id", authPayment.preapprovalId)
+          .is("user_id", null)
+          .select("id");
 
-      if (updateError) {
-        throw new Error(
-          `Failed to link subscription to user: ${updateError.message}`
-        );
-      }
+        if (updateError) {
+          throw new Error(
+            `Failed to link subscription to user: ${updateError.message}`
+          );
+        }
+        return !!updated && updated.length > 0;
+      };
 
-      if (updated && updated.length > 0) {
+      const logLinked = () =>
         console.info("[payments-webhook] linked subscription to user", {
           preapprovalId: authPayment.preapprovalId,
           paymentId: authPayment.paymentId,
           userId,
         });
+
+      if (await linkUnlinkedSubscription()) {
+        logLinked();
         return;
       }
 
@@ -396,7 +402,19 @@ async function processEvent(
       }
 
       if (existing) {
-        if (existing.user_id && existing.user_id !== userId) {
+        // the preapproval event (subscription.updated) arrives at the same
+        // time and may have inserted the row between our update and this
+        // select. the row is there now, so link it.
+        if (!existing.user_id) {
+          if (await linkUnlinkedSubscription()) {
+            logLinked();
+            return;
+          }
+          throw new Error(
+            `Subscription ${authPayment.preapprovalId} still unlinked after retry`
+          );
+        }
+        if (existing.user_id !== userId) {
           console.warn(
             "[payments-webhook] subscription already linked to another user; leaving it untouched",
             {
@@ -495,25 +513,29 @@ async function upsertSubscription(
   const externalReference =
     details.externalReference || existing?.external_reference || null;
 
-  const { error } = await supabase.from("subscriptions").upsert(
-    {
-      provider: providerName,
-      provider_subscription_id: providerSubscriptionId,
-      status: details.status,
-      reason: details.reason,
-      payer_email: payerEmail,
-      frequency: details.frequency,
-      frequency_type: details.frequencyType,
-      transaction_amount: details.transactionAmount,
-      currency_id: details.currencyId,
-      external_reference: externalReference,
-      auto_recurring: details.autoRecurring as Record<string, unknown> | null,
-      plan_id: planId,
-      user_id: userId,
-      raw: details.raw as Record<string, unknown>,
-    },
-    { onConflict: "provider,provider_subscription_id" }
-  );
+  const row: Record<string, unknown> = {
+    provider: providerName,
+    provider_subscription_id: providerSubscriptionId,
+    status: details.status,
+    reason: details.reason,
+    frequency: details.frequency,
+    frequency_type: details.frequencyType,
+    transaction_amount: details.transactionAmount,
+    currency_id: details.currencyId,
+    auto_recurring: details.autoRecurring as Record<string, unknown> | null,
+    plan_id: planId,
+    raw: details.raw as Record<string, unknown>,
+  };
+  // the payment event can link the row between our select and this upsert.
+  // omit the link columns when we have nothing to write so the upsert does
+  // not overwrite them with null (on conflict only sent columns are updated).
+  if (userId) row.user_id = userId;
+  if (payerEmail) row.payer_email = payerEmail;
+  if (externalReference) row.external_reference = externalReference;
+
+  const { error } = await supabase
+    .from("subscriptions")
+    .upsert(row, { onConflict: "provider,provider_subscription_id" });
 
   if (error) {
     throw new Error(`Failed to upsert subscription: ${error.message}`);

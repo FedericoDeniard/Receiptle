@@ -18,6 +18,8 @@ type ToolPart = Extract<
   { type: `tool-${string}` | "dynamic-tool" }
 >;
 
+type FilePart = Extract<UIMessage["parts"][number], { type: "file" }>;
+
 function isToolPart(part: UIMessage["parts"][number]): part is ToolPart {
   return part.type === "dynamic-tool" || part.type.startsWith("tool-");
 }
@@ -47,6 +49,136 @@ function isRegularToolPart(
   if (!isToolPart(part)) return false;
   if (isApprovalTool(part, hasApproval)) return false;
   return true;
+}
+
+/**
+ * The @mastra/ai-sdk adapter converts the server-side `tripwire` chunk to a
+ * `data-tripwire` data part; the AI SDK silently persists it unless we render
+ * it explicitly. Returns the `reason` string so the UI can show why the
+ * request was blocked instead of an empty bubble.
+ */
+function getTripwireReason(
+  part: UIMessage["parts"][number],
+  isUser: boolean
+): string | null {
+  if (isUser) return null;
+  if (part.type !== "data-tripwire") return null;
+  const data = (part as { data?: unknown }).data;
+  if (typeof data !== "object" || data === null) return null;
+  const reason = (data as { reason?: unknown }).reason;
+  if (typeof reason !== "string" || reason.trim().length === 0) return null;
+  return reason;
+}
+
+function FileMessagePart({
+  part,
+  lightboxOpen,
+  onOpenChange,
+}: {
+  part: FilePart;
+  lightboxOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const isImage =
+    typeof part.mediaType === "string" && part.mediaType.startsWith("image/");
+  const openLightbox = () => {
+    if (!isImage) return;
+    onOpenChange(true);
+  };
+
+  return (
+    <div className="mb-2 [button]:hidden">
+      <Attachments variant="grid">
+        <Attachment
+          data={{ ...part, id: part.url } as never}
+          {...(isImage
+            ? {
+                className: "cursor-zoom-in transition-opacity hover:opacity-90",
+                onClick: openLightbox,
+                onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    openLightbox();
+                  }
+                },
+                role: "button",
+                tabIndex: 0,
+              }
+            : {})}
+        >
+          <AttachmentPreview />
+        </Attachment>
+      </Attachments>
+      {isImage && (
+        <AttachmentLightbox
+          alt={part.filename ?? "Attached image"}
+          open={lightboxOpen}
+          src={part.url}
+          onOpenChange={onOpenChange}
+        />
+      )}
+    </div>
+  );
+}
+
+function ToolMessagePart({
+  part,
+  hasApproval,
+  onApproveTool,
+  onRejectTool,
+}: {
+  part: ToolPart;
+  hasApproval: boolean;
+  onApproveTool?: (id: string) => void;
+  onRejectTool?: (id: string) => void;
+}) {
+  if (part.errorText) {
+    console.error(`[tool:${part.toolName ?? part.type}]`, part.errorText);
+  }
+
+  if (isRegularToolPart(part, hasApproval)) {
+    return <ToolPill part={part} />;
+  }
+
+  if (part.type === "tool-deleteTransactionTool") {
+    return (
+      <DeleteTransactionConfirmation
+        part={
+          part as unknown as Parameters<
+            typeof DeleteTransactionConfirmation
+          >[0]["part"]
+        }
+        onApprove={onApproveTool}
+        onReject={onRejectTool}
+      />
+    );
+  }
+
+  if (part.type === "tool-updateTransactionTool") {
+    return (
+      <UpdateTransactionConfirmation
+        part={
+          part as unknown as Parameters<
+            typeof UpdateTransactionConfirmation
+          >[0]["part"]
+        }
+        onApprove={onApproveTool}
+        onReject={onRejectTool}
+      />
+    );
+  }
+
+  return (
+    <CreateTransactionConfirmation
+      part={
+        part as unknown as Parameters<
+          typeof CreateTransactionConfirmation
+        >[0]["part"]
+      }
+      onApprove={onApproveTool}
+      onReject={onRejectTool}
+    />
+  );
 }
 
 export type MessagePartsProps = {
@@ -80,142 +212,47 @@ export function MessageParts({
     }
 
     if (part.type === "file" && isUser) {
-      const isImage =
-        typeof part.mediaType === "string" &&
-        part.mediaType.startsWith("image/");
-      const openLightbox = () => {
-        if (!isImage) return;
-        setLightbox({
-          src: part.url,
-          alt: part.filename ?? "Attached image",
-        });
-      };
-
       elements.push(
-        <div key={`file-${part.url}`} className="mb-2 [button]:hidden">
-          <Attachments variant="grid">
-            <Attachment
-              data={{ ...part, id: part.url } as never}
-              {...(isImage
-                ? {
-                    className:
-                      "cursor-zoom-in transition-opacity hover:opacity-90",
-                    onClick: openLightbox,
-                    onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        openLightbox();
-                      }
-                    },
-                    role: "button",
-                    tabIndex: 0,
-                  }
-                : {})}
-            >
-              <AttachmentPreview />
-            </Attachment>
-          </Attachments>
-          {isImage && (
-            <AttachmentLightbox
-              alt={part.filename ?? "Attached image"}
-              open={lightbox?.src === part.url}
-              src={part.url}
-              onOpenChange={open => {
-                if (!open) closeLightbox();
-              }}
-            />
-          )}
-        </div>
+        <FileMessagePart
+          key={`file-${part.url}`}
+          part={part}
+          lightboxOpen={lightbox?.src === part.url}
+          onOpenChange={open => {
+            if (open) {
+              setLightbox({
+                src: part.url,
+                alt: part.filename ?? "Attached image",
+              });
+            } else {
+              closeLightbox();
+            }
+          }}
+        />
       );
       continue;
     }
 
     if (isToolPart(part)) {
-      if (part.errorText) {
-        console.error(`[tool:${part.toolName ?? part.type}]`, part.errorText);
-      }
-      if (isRegularToolPart(part, hasApproval)) {
-        elements.push(
-          <ToolPill
-            key={`${part.type}-${part.toolCallId}-${elements.length}`}
-            part={part}
-          />
-        );
-        continue;
-      }
-      // Approval-required tools render their own confirmation card.
-      if (part.type === "tool-deleteTransactionTool") {
-        elements.push(
-          <DeleteTransactionConfirmation
-            key={`${part.type}-${part.toolCallId}`}
-            part={
-              part as unknown as Parameters<
-                typeof DeleteTransactionConfirmation
-              >[0]["part"]
-            }
-            onApprove={onApproveTool}
-            onReject={onRejectTool}
-          />
-        );
-      } else if (part.type === "tool-updateTransactionTool") {
-        elements.push(
-          <UpdateTransactionConfirmation
-            key={`${part.type}-${part.toolCallId}`}
-            part={
-              part as unknown as Parameters<
-                typeof UpdateTransactionConfirmation
-              >[0]["part"]
-            }
-            onApprove={onApproveTool}
-            onReject={onRejectTool}
-          />
-        );
-      } else {
-        elements.push(
-          <CreateTransactionConfirmation
-            key={`${part.type}-${part.toolCallId}`}
-            part={
-              part as unknown as Parameters<
-                typeof CreateTransactionConfirmation
-              >[0]["part"]
-            }
-            onApprove={onApproveTool}
-            onReject={onRejectTool}
-          />
-        );
-      }
+      elements.push(
+        <ToolMessagePart
+          key={`${part.type}-${part.toolCallId}-${elements.length}`}
+          part={part}
+          hasApproval={hasApproval}
+          onApproveTool={onApproveTool}
+          onRejectTool={onRejectTool}
+        />
+      );
       continue;
     }
 
-    // Render the guardrail tripwire (data-tripwire) emitted by input
-    // processors (e.g. TopicGuardrailProcessor). The @mastra/ai-sdk
-    // adapter converts the server-side `tripwire` chunk to a
-    // `data-tripwire` data part; the AI SDK silently persists it
-    // unless we render it explicitly. We display the `reason` as the
-    // assistant's response so the user sees why their request was
-    // blocked instead of an empty bubble.
-    if (
-      part.type === "data-tripwire" &&
-      !isUser &&
-      typeof (part as { data?: unknown }).data === "object" &&
-      (part as { data?: unknown }).data !== null
-    ) {
-      const tripwireData = (
-        part as { data: { reason?: string; processorId?: string } }
-      ).data;
-      const reason = tripwireData.reason;
-      if (typeof reason === "string" && reason.trim().length > 0) {
-        elements.push(
-          <MessageResponse key={`tripwire-${elements.length}`}>
-            {reason}
-          </MessageResponse>
-        );
-        continue;
-      }
+    const tripwireReason = getTripwireReason(part, isUser);
+    if (tripwireReason) {
+      elements.push(
+        <MessageResponse key={`tripwire-${elements.length}`}>
+          {tripwireReason}
+        </MessageResponse>
+      );
     }
-
-    // Unknown or non-renderable part types (e.g. step-start, step-end)
-    // are intentionally skipped.
   }
 
   return <>{elements}</>;

@@ -109,7 +109,7 @@ export function Subscriptions() {
             onClick={() => {
               cancel.mutate({
                 userId: row.original.user_id as string,
-                targetStatus: "pending_cancellation",
+                targetStatus: "cancelled",
               });
             }}
           >

@@ -22,3 +22,22 @@ export function formatDateSafe(
     minute: "2-digit",
   });
 }
+
+/**
+ * Formats an ISO timestamp as a localized date without the time part.
+ * Same fallback contract as formatDateSafe: missing values render as an
+ * em dash and unparseable input is returned verbatim.
+ */
+export function formatDateOnly(
+  value: string | null | undefined,
+  locale?: string
+): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString(locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}

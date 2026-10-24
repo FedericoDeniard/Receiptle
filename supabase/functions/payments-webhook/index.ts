@@ -472,6 +472,7 @@ interface SubscriptionUpsertInput {
   externalReference: string | null;
   autoRecurring: unknown;
   preapprovalPlanId: string | null;
+  currentPeriodEnd: string | null;
   raw: unknown;
 }
 
@@ -503,7 +504,7 @@ async function upsertSubscription(
   // payment event already linked. same for payer_email.
   const { data: existing } = await supabase
     .from("subscriptions")
-    .select("user_id, payer_email, external_reference")
+    .select("user_id, payer_email, external_reference, status, access_until")
     .eq("provider", providerName)
     .eq("provider_subscription_id", providerSubscriptionId)
     .maybeSingle();
@@ -513,10 +514,18 @@ async function upsertSubscription(
   const externalReference =
     details.externalReference || existing?.external_reference || null;
 
+  const { status, accessUntil } = resolveLocalStatus({
+    providerStatus: details.status,
+    currentPeriodEnd: details.currentPeriodEnd,
+    existingStatus: existing?.status ?? null,
+    existingAccessUntil: existing?.access_until ?? null,
+  });
+
   const row: Record<string, unknown> = {
     provider: providerName,
     provider_subscription_id: providerSubscriptionId,
-    status: details.status,
+    status,
+    access_until: accessUntil,
     reason: details.reason,
     frequency: details.frequency,
     frequency_type: details.frequencyType,
@@ -540,6 +549,72 @@ async function upsertSubscription(
   if (error) {
     throw new Error(`Failed to upsert subscription: ${error.message}`);
   }
+}
+
+// ─── entitlement state ───────────────────────────────────────────────────────
+
+// map the provider status onto the local entitlement status.
+//
+// mp has no "cancel at period end": a cancelled preapproval is cancelled
+// immediately, even though the subscriber already paid through
+// `currentPeriodEnd`. keeping access until that date is a product decision,
+// so a cancelled subscription with a future paid period is stored as
+// `pending_cancellation` (an entitled status) and the pg_cron job flips it
+// to `cancelled` once `access_until` passes.
+//
+// retried webhooks must not move a terminal row back to an entitled state,
+// nor extend access after the paid period ended.
+function resolveLocalStatus(input: {
+  providerStatus: string;
+  currentPeriodEnd: string | null;
+  existingStatus: string | null;
+  existingAccessUntil: string | null;
+}): { status: string; accessUntil: string | null } {
+  const {
+    providerStatus,
+    currentPeriodEnd,
+    existingStatus,
+    existingAccessUntil,
+  } = input;
+
+  if (providerStatus !== "cancelled") {
+    // active provider status: refresh the paid-through date, falling back
+    // to the stored value when the provider does not report a paid period.
+    return {
+      status: providerStatus,
+      accessUntil: currentPeriodEnd ?? existingAccessUntil ?? null,
+    };
+  }
+
+  // already terminal or already waiting for the paid period to end:
+  // preserve the local state so webhook retries cannot resurrect access.
+  if (
+    existingStatus === "cancelled" ||
+    existingStatus === "pending_cancellation"
+  ) {
+    return {
+      status: existingStatus,
+      accessUntil: existingAccessUntil ?? null,
+    };
+  }
+
+  const accessUntil =
+    existingAccessUntil && isFuture(existingAccessUntil)
+      ? existingAccessUntil
+      : currentPeriodEnd && isFuture(currentPeriodEnd)
+        ? currentPeriodEnd
+        : null;
+
+  if (accessUntil) {
+    return { status: "pending_cancellation", accessUntil };
+  }
+
+  return { status: "cancelled", accessUntil: new Date().toISOString() };
+}
+
+function isFuture(iso: string): boolean {
+  const timestamp = Date.parse(iso);
+  return !Number.isNaN(timestamp) && timestamp > Date.now();
 }
 
 const UUID_RE =

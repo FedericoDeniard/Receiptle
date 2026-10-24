@@ -56,6 +56,17 @@ export const preapprovalResponseSchema = z.object({
   back_url: z.string().optional().nullable(),
   date_created: z.string().optional(),
   last_modified: z.string().optional(),
+  // next scheduled charge. for an active subscription this is also the end
+  // of the current paid period. mp keeps it after a cancellation.
+  next_payment_date: z.string().optional().nullable(),
+  summarized: z
+    .object({
+      // date of the last successful charge; the fallback source for the
+      // paid-period end when next_payment_date is missing.
+      last_charged_date: z.string().optional().nullable(),
+    })
+    .optional()
+    .nullable(),
   // present when the preapproval is associated with a plan; lets us link
   // the subscription back to our payments.plans row via the
   // plan_provider_variants table.

@@ -10,6 +10,9 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   selected?: boolean;
 }
 
+type Variant = NonNullable<ButtonProps["variant"]>;
+type Size = NonNullable<ButtonProps["size"]>;
+
 const baseClasses =
   "inline-flex items-center justify-center font-medium transition-[color,background-color,border-color,box-shadow,opacity,transform] focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
 
@@ -31,6 +34,52 @@ const sizeClasses = {
   lg: "px-6 py-4 text-base rounded-lg",
 };
 
+function variantClassesFor(variant: Variant, selected: boolean): string {
+  if (selected && variant === "outline") return variantClasses.primary;
+  return variantClasses[variant];
+}
+
+function iconSizeFor(size: Size): number {
+  if (size === "sm") return 16;
+  if (size === "lg") return 20;
+  return 18;
+}
+
+function resolveIcon(
+  loading: boolean,
+  icon: React.ReactNode,
+  size: Size
+): React.ReactNode {
+  if (!loading) return icon;
+  return <Loader2 className="animate-spin" size={iconSizeFor(size)} />;
+}
+
+function ButtonContent({
+  icon,
+  iconPosition,
+  children,
+}: {
+  icon: React.ReactNode;
+  iconPosition: "left" | "right";
+  children: React.ReactNode;
+}) {
+  if (!icon) return <>{children}</>;
+  if (iconPosition === "left") {
+    return (
+      <>
+        {icon}
+        {children && <span className="ml-2">{children}</span>}
+      </>
+    );
+  }
+  return (
+    <>
+      {children && <span className="mr-2">{children}</span>}
+      {icon}
+    </>
+  );
+}
+
 export function Button({
   children,
   variant = "primary",
@@ -45,17 +94,8 @@ export function Button({
   ...props
 }: ButtonProps) {
   const widthClasses = fullWidth ? "w-full" : "";
-
-  const classes = `${baseClasses} ${selected && variant === "outline" ? variantClasses.primary : variantClasses[variant]} ${sizeClasses[size]} ${widthClasses} ${className}`;
-
-  const loadingIcon = loading ? (
-    <Loader2
-      className="animate-spin"
-      size={size === "sm" ? 16 : size === "lg" ? 20 : 18}
-    />
-  ) : (
-    icon
-  );
+  const classes = `${baseClasses} ${variantClassesFor(variant, selected)} ${sizeClasses[size]} ${widthClasses} ${className}`;
+  const iconNode = resolveIcon(loading, icon, size);
 
   return (
     <button
@@ -64,19 +104,9 @@ export function Button({
       disabled={disabled || loading}
       {...props}
     >
-      {loadingIcon && iconPosition === "left" ? (
-        <>
-          {loadingIcon}
-          {children && <span className="ml-2">{children}</span>}
-        </>
-      ) : loadingIcon && iconPosition === "right" ? (
-        <>
-          {children && <span className="mr-2">{children}</span>}
-          {loadingIcon}
-        </>
-      ) : (
-        children
-      )}
+      <ButtonContent icon={iconNode} iconPosition={iconPosition}>
+        {children}
+      </ButtonContent>
     </button>
   );
 }

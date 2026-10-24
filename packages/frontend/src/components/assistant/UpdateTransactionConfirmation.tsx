@@ -187,6 +187,51 @@ function useTransactionDetail(
   return { detail, currentTagIds, currentReportId, loading, notFound };
 }
 
+function deriveProposedReportState(
+  updates: Partial<Record<keyof UpdateFields, unknown>>,
+  enabled: boolean
+): {
+  proposedReportId: string | null;
+  proposedReportChange: boolean;
+  shouldResolveProposedReport: boolean;
+} {
+  const proposedReportId =
+    typeof updates.report_id === "string" ? updates.report_id : null;
+  const proposedReportChange = updates.report_id !== undefined;
+  const shouldResolveProposedReport =
+    enabled && proposedReportChange && proposedReportId !== null;
+  return {
+    proposedReportId,
+    proposedReportChange,
+    shouldResolveProposedReport,
+  };
+}
+
+function isProposedReportInvalid(
+  shouldResolve: boolean,
+  pending: boolean,
+  error: boolean,
+  proposedReport: { id: string } | undefined
+): boolean {
+  return shouldResolve && !pending && (error || !proposedReport);
+}
+
+function isUpdateApprovalBlocked(
+  loading: boolean,
+  notFound: boolean,
+  detailLoaded: boolean,
+  proposedReportPending: boolean,
+  invalidProposedReport: boolean
+): boolean {
+  return (
+    loading ||
+    notFound ||
+    !detailLoaded ||
+    proposedReportPending ||
+    invalidProposedReport
+  );
+}
+
 export function UpdateTransactionConfirmation({
   part,
   onApprove,
@@ -202,12 +247,11 @@ export function UpdateTransactionConfirmation({
 
   const summary = detail?.name ?? detail?.merchant ?? "";
 
-  const proposedReportId =
-    typeof updates.report_id === "string" ? updates.report_id : null;
-  const proposedReportChange = updates.report_id !== undefined;
-
-  const shouldResolveProposedReport =
-    enabled && proposedReportChange && proposedReportId !== null;
+  const {
+    proposedReportId,
+    proposedReportChange,
+    shouldResolveProposedReport,
+  } = deriveProposedReportState(updates, enabled);
   const {
     data: activeReports = [],
     isLoading: proposedReportPending,
@@ -221,16 +265,12 @@ export function UpdateTransactionConfirmation({
   const proposedReport = proposedReportId
     ? activeReportsById.get(proposedReportId)
     : undefined;
-  const invalidProposedReport =
-    shouldResolveProposedReport &&
-    !proposedReportPending &&
-    (proposedReportError || !proposedReport);
-  const reportCannotApprove =
-    loading ||
-    notFound ||
-    !detail ||
-    proposedReportPending ||
-    invalidProposedReport;
+  const invalidProposedReport = isProposedReportInvalid(
+    shouldResolveProposedReport,
+    proposedReportPending,
+    proposedReportError,
+    proposedReport
+  );
 
   let content: React.ReactNode;
   if (loading) {
@@ -254,7 +294,13 @@ export function UpdateTransactionConfirmation({
     );
   }
 
-  const disableApprovalActions = reportCannotApprove;
+  const disableApprovalActions = isUpdateApprovalBlocked(
+    loading,
+    notFound,
+    detail !== null,
+    proposedReportPending,
+    invalidProposedReport
+  );
 
   return (
     <ApprovalCardShell

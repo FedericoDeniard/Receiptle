@@ -32,7 +32,6 @@ export function TransactionDetail({
     transaction.transaction_type as "income" | "expense" | "ingreso" | "egreso"
   );
 
-  const [copied, setCopied] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -69,14 +68,6 @@ export function TransactionDetail({
     }
   };
 
-  const handleCopyId = () => {
-    if (typeof window !== "undefined" && window.navigator?.clipboard) {
-      window.navigator.clipboard.writeText(transaction.source_message_id);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   const handleDelete = async () => {
     if (!onDelete) return;
 
@@ -97,24 +88,11 @@ export function TransactionDetail({
     await onUpdate(transaction.id, updates);
   };
 
-  const amountColor = "text-[var(--text-primary)]";
-
-  // Format date and time
-  let dateTimeStr: string;
-  try {
-    dateTimeStr = formatDateTime(
-      transaction.transaction_date || transaction.date
-    );
-  } catch {
-    dateTimeStr = "Invalid date";
-  }
-
-  let amountDisplay: string;
-  try {
-    amountDisplay = transaction.amount.toLocaleString();
-  } catch {
-    amountDisplay = "error";
-  }
+  const dateTimeStr = formatTransactionDateTime(
+    formatDateTime,
+    transaction.transaction_date || transaction.date
+  );
+  const amountDisplay = formatTransactionAmount(transaction.amount);
 
   return (
     <div className="h-full flex flex-col bg-white lg:rounded-3xl relative lg:shadow-sm lg:border border-zinc-100">
@@ -131,48 +109,13 @@ export function TransactionDetail({
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto p-6">
-        {/* Header with Icon */}
-        <div className="flex justify-center mb-6 mt-2">
-          <div
-            className={`p-4 rounded-2xl ${
-              isIncome
-                ? "bg-green-100 text-green-600"
-                : "bg-red-100 text-red-600"
-            }`}
-          >
-            {isIncome ? (
-              <ArrowDown strokeWidth={3} size={32} />
-            ) : (
-              <ArrowUp strokeWidth={3} size={32} />
-            )}
-          </div>
-        </div>
-
-        {/* Amount */}
-        <div className="text-center mb-3">
-          <h1
-            className={`text-3xl font-semibold ${amountColor} tracking-tight`}
-          >
-            {isIncome ? "+" : "-"}
-            {transaction.currency} {amountDisplay}
-          </h1>
-        </div>
-
-        {/* Context Pill */}
-        <div className="flex justify-center mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-50 border border-zinc-100 rounded-full text-sm text-[var(--text-secondary)] shadow-sm">
-            <div
-              className={`size-2 rounded-full ${isIncome ? "bg-green-500" : "bg-red-500"}`}
-            />
-            <span className="font-medium text-[var(--text-primary)]">
-              {transaction.merchant || t("transactions.unknown")}
-            </span>
-            <span className="text-zinc-300 text-xs">•</span>
-            <span className="capitalize">
-              {translateCategory(transaction.category)}
-            </span>
-          </div>
-        </div>
+        <TransactionDetailHero
+          isIncome={isIncome}
+          currency={transaction.currency}
+          amountDisplay={amountDisplay}
+          merchant={transaction.merchant || t("transactions.unknown")}
+          categoryLabel={translateCategory(transaction.category)}
+        />
 
         {/* Details List */}
         <div className="space-y-6 px-1">
@@ -204,29 +147,9 @@ export function TransactionDetail({
             value={`${transaction.currency} ${amountDisplay}`}
           />
 
-          <div className="flex items-center justify-between py-1">
-            <span className="text-[var(--text-secondary)] text-sm">
-              {t("transactions.reference")}
-            </span>
-            <div className="flex items-center gap-2 text-[var(--text-primary)] font-medium text-sm text-right overflow-hidden pl-4">
-              <span className="truncate w-32 md:w-40 font-mono text-xs opacity-70">
-                {transaction.source_message_id}
-              </span>
-              <Button
-                onClick={handleCopyId}
-                variant="ghost"
-                size="sm"
-                icon={
-                  copied ? (
-                    <Check size={14} className="text-green-500" />
-                  ) : (
-                    <Copy size={14} />
-                  )
-                }
-                title={t("common.copy")}
-              />
-            </div>
-          </div>
+          <TransactionReferenceRow
+            sourceMessageId={transaction.source_message_id}
+          />
         </div>
 
         {/* Tags */}
@@ -303,6 +226,120 @@ export function TransactionDetail({
         onSave={handleUpdate}
         transaction={transaction}
       />
+    </div>
+  );
+}
+
+function formatTransactionDateTime(
+  format: (value: string) => string,
+  value: string
+): string {
+  try {
+    return format(value);
+  } catch {
+    return "Invalid date";
+  }
+}
+
+function formatTransactionAmount(amount: number): string {
+  try {
+    return amount.toLocaleString();
+  } catch {
+    return "error";
+  }
+}
+
+function TransactionDetailHero({
+  isIncome,
+  currency,
+  amountDisplay,
+  merchant,
+  categoryLabel,
+}: {
+  isIncome: boolean;
+  currency: string;
+  amountDisplay: string;
+  merchant: string;
+  categoryLabel: string;
+}) {
+  return (
+    <>
+      <div className="flex justify-center mb-6 mt-2">
+        <div
+          className={`p-4 rounded-2xl ${
+            isIncome ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+          }`}
+        >
+          {isIncome ? (
+            <ArrowDown strokeWidth={3} size={32} />
+          ) : (
+            <ArrowUp strokeWidth={3} size={32} />
+          )}
+        </div>
+      </div>
+
+      <div className="text-center mb-3">
+        <h1 className="text-3xl font-semibold text-[var(--text-primary)] tracking-tight">
+          {isIncome ? "+" : "-"}
+          {currency} {amountDisplay}
+        </h1>
+      </div>
+
+      <div className="flex justify-center mb-10">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-50 border border-zinc-100 rounded-full text-sm text-[var(--text-secondary)] shadow-sm">
+          <div
+            className={`size-2 rounded-full ${isIncome ? "bg-green-500" : "bg-red-500"}`}
+          />
+          <span className="font-medium text-[var(--text-primary)]">
+            {merchant}
+          </span>
+          <span className="text-zinc-300 text-xs">•</span>
+          <span className="capitalize">{categoryLabel}</span>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function TransactionReferenceRow({
+  sourceMessageId,
+}: {
+  sourceMessageId: string;
+}) {
+  const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyId = () => {
+    if (typeof window !== "undefined" && window.navigator?.clipboard) {
+      window.navigator.clipboard.writeText(sourceMessageId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between py-1">
+      <span className="text-[var(--text-secondary)] text-sm">
+        {t("transactions.reference")}
+      </span>
+      <div className="flex items-center gap-2 text-[var(--text-primary)] font-medium text-sm text-right overflow-hidden pl-4">
+        <span className="truncate w-32 md:w-40 font-mono text-xs opacity-70">
+          {sourceMessageId}
+        </span>
+        <Button
+          onClick={handleCopyId}
+          variant="ghost"
+          size="sm"
+          icon={
+            copied ? (
+              <Check size={14} className="text-green-500" />
+            ) : (
+              <Copy size={14} />
+            )
+          }
+          title={t("common.copy")}
+        />
+      </div>
     </div>
   );
 }

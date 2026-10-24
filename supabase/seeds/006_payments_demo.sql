@@ -39,7 +39,7 @@ insert into payments.plan_provider_variants (
     p.id,
     'mercadopago',
     'd89dfb7bdad34e6ca30e2927c6831fdd',
-    10000,
+    15000,
     'ARS',
     true
   from payments.plans p

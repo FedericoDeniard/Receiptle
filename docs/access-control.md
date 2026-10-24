@@ -402,9 +402,11 @@ control story. Implementation contract:
 - **Mutations.** `admin_set_user_role` blocks self-edits
   (`p_user_id = auth.uid()` raises `42501`). `admin_cancel_subscription`
   updates the local `payments.subscriptions.status` to
-  `cancelled | paused | pending_cancellation`; the provider-side
-  reconciliation is the `payments-webhook` job — this is best-effort UX
-  for the panel, not a substitute for the webhook.
+  `cancelled | paused | pending_cancellation`; `cancelled` also sets
+  `access_until = now()` so the revoke is immediate and survives a
+  webhook retry. The provider-side reconciliation is the
+  `payments-webhook` job — this is best-effort UX for the panel, not a
+  substitute for the webhook.
 - **Seed retry.** `admin_retry_seed` resets a `failed`/`completed`
   seed row to `pending` and returns `(seed_id, connection_id, user_id)`.
   The frontend then calls `mastra-server /api/seed-emails` with the

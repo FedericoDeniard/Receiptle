@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../types/database.types";
 import { getSupabase } from "../lib/supabase";
+import { isActiveSubscriptionStatus } from "../lib/subscription-status";
 import { getConfig } from "../config";
 
 type PlanRow = Database["payments"]["Tables"]["plans"]["Row"];
@@ -14,8 +15,12 @@ export interface PlanWithVariants extends PlanRow {
   plan_provider_variants: PlanProviderVariantRow[];
 }
 
-export interface MySubscription extends SubscriptionRow {
+export interface MySubscription extends Omit<SubscriptionRow, "access_until"> {
   plan: PlanRow | null;
+  // added by 20261024144828_add_subscription_access_until. `Omit` keeps this
+  // override valid once the generated types are refreshed with
+  // `bun run docker:db:types` (the column becomes required there).
+  access_until?: string | null;
 }
 
 export interface CheckoutLinkResponse {
@@ -67,15 +72,21 @@ export const paymentsService = {
       .from("subscriptions")
       .select("*, plan:plans(*)")
       .eq("user_id", userId)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .order("updated_at", { ascending: false });
 
     if (error) {
       throw error;
     }
 
-    return (data ?? null) as MySubscription | null;
+    const rows = (data ?? []) as MySubscription[];
+    // the current plan is the most recent entitled row. an expired
+    // pending_cancellation row must not shadow a newer active
+    // subscription (expiring it bumps its updated_at).
+    return (
+      rows.find(row => isActiveSubscriptionStatus(row.status)) ??
+      rows[0] ??
+      null
+    );
   },
 
   async createCheckoutLink(
@@ -109,7 +120,10 @@ export const paymentsService = {
     return payload as CheckoutLinkResponse;
   },
 
-  async cancelMySubscription(): Promise<{ status: string }> {
+  async cancelMySubscription(): Promise<{
+    status: string;
+    accessUntil?: string | null;
+  }> {
     const [supabase, edgeFunctionsUrl, config] = await Promise.all([
       getSupabase(),
       getEdgeFunctionsUrl(),

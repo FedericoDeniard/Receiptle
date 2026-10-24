@@ -20,6 +20,23 @@ import { requireSecretKey } from "../_shared/lib/api-keys.ts";
 import { requireMinRole, requireUserAuth } from "../_shared/auth.ts";
 import { getProvider } from "../_shared/lib/payments/index.ts";
 
+// statuses that still carry entitlements. the endpoint targets the most
+// recent entitled row, falling back to the most recent row overall when the
+// user has no active subscription.
+const ACTIVE_STATUSES = new Set([
+  "authorized",
+  "pending",
+  "paused",
+  "pending_cancellation",
+]);
+
+interface SubscriptionLookupRow {
+  provider: string;
+  provider_subscription_id: string;
+  status: string;
+  access_until: string | null;
+}
+
 Deno.serve(async req => {
   const corsHeaders = getCorsHeaders(req);
   const preflight = handleCorsPreflightRequest(req, corsHeaders);
@@ -60,8 +77,9 @@ Deno.serve(async req => {
   const targetStatus = body.status ?? "cancelled";
 
   // lookup the user's own subscription. we use the service_role client
-  // (bypasses RLS) and filter by user_id explicitly. sorting by
-  // updated_at desc and limiting to 1 gives us the most recent row.
+  // (bypasses RLS) and filter by user_id explicitly. prefer an entitled
+  // row over a terminal one: expiring a pending_cancellation bumps its
+  // updated_at and would otherwise shadow a newer active subscription.
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     requireSecretKey(),
@@ -70,10 +88,9 @@ Deno.serve(async req => {
 
   const { data: subs, error: lookupError } = await supabase
     .from("subscriptions")
-    .select("provider, provider_subscription_id, status")
+    .select("provider, provider_subscription_id, status, access_until")
     .eq("user_id", user.id)
-    .order("updated_at", { ascending: false })
-    .limit(1);
+    .order("updated_at", { ascending: false });
 
   if (lookupError) {
     return jsonResponse(
@@ -83,7 +100,11 @@ Deno.serve(async req => {
     );
   }
 
-  if (!subs || subs.length === 0) {
+  const rows = (subs ?? []) as SubscriptionLookupRow[];
+  const sub =
+    rows.find(row => ACTIVE_STATUSES.has(row.status)) ?? rows[0] ?? null;
+
+  if (!sub) {
     return jsonResponse(
       { error: "No subscription found for this user" },
       404,
@@ -91,17 +112,21 @@ Deno.serve(async req => {
     );
   }
 
-  const sub = subs[0];
-
   // idempotency: if the row is already in the target state, the call
-  // would be a no-op at the provider. short-circuit to avoid a
-  // confusing 4xx from mp.
-  if (sub.status === targetStatus) {
+  // would be a no-op at the provider. a pending_cancellation row was
+  // already cancelled at the provider and is just waiting for the paid
+  // period to end, so it counts as cancelled too.
+  const alreadyCancelled =
+    sub.status === "cancelled" ||
+    (targetStatus === "cancelled" && sub.status === "pending_cancellation");
+
+  if (sub.status === targetStatus || alreadyCancelled) {
     return jsonResponse(
       {
         status: sub.status,
         providerSubscriptionId: sub.provider_subscription_id,
         alreadyInTargetState: true,
+        accessUntil: sub.access_until ?? null,
         cancellationRequestedAt:
           sub.status === "cancelled" ? new Date().toISOString() : null,
       },
@@ -142,6 +167,7 @@ Deno.serve(async req => {
       status: "pending_cancellation",
       requestedStatus: targetStatus,
       providerSubscriptionId: sub.provider_subscription_id,
+      accessUntil: sub.access_until ?? null,
       cancellationRequestedAt: new Date().toISOString(),
     },
     200,

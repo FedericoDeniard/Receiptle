@@ -568,6 +568,7 @@
   "accountBilling": {
     "title": "Account & Billing",
     "description": "Choose the perfect plan for your needs and start optimizing your workflow today.",
+    "accessUntil": "Access until {{date}}",
     "currentPlan": {
       "title": "Current plan",
       "paidTitle": "Paid plan",

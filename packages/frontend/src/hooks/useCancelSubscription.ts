@@ -4,7 +4,11 @@ import { queryKeys } from "../lib/query-client";
 
 export function useCancelSubscription() {
   const queryClient = useQueryClient();
-  return useMutation<{ status: string }, Error, void>({
+  return useMutation<
+    { status: string; accessUntil?: string | null },
+    Error,
+    void
+  >({
     mutationFn: () => paymentsService.cancelMySubscription(),
     onSuccess: () => {
       // After cancellation, the active plan can disappear (or move

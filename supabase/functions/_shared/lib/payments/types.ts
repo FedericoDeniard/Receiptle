@@ -63,6 +63,11 @@ export interface SubscriptionDetails {
   // when the subscription is associated with a preapproval plan, this is
   // the id of that plan in mp. lets the webhook resolve plan_id in our db.
   preapprovalPlanId: string | null;
+  // end of the period the subscriber has already paid for. for active
+  // subscriptions this is the next charge date; for a cancelled one it
+  // stays at the last paid period's end. null when the provider has no
+  // paid period yet (e.g. cancelled before the first charge).
+  currentPeriodEnd: string | null;
   raw: unknown;
 }
 

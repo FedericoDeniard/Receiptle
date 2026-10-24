@@ -98,6 +98,12 @@ export class MercadoPagoProvider implements PaymentProvider {
       externalReference: parsed.external_reference ?? null,
       autoRecurring: parsed.auto_recurring ?? null,
       preapprovalPlanId: parsed.preapproval_plan_id ?? null,
+      currentPeriodEnd: resolveCurrentPeriodEnd({
+        nextPaymentDate: parsed.next_payment_date ?? null,
+        lastChargedDate: parsed.summarized?.last_charged_date ?? null,
+        frequency: parsed.auto_recurring?.frequency ?? null,
+        frequencyType: parsed.auto_recurring?.frequency_type ?? null,
+      }),
       raw: json,
     };
   }
@@ -339,4 +345,63 @@ export class MercadoPagoProvider implements PaymentProvider {
       raw: parsed,
     };
   }
+}
+
+// ─── paid-period end ─────────────────────────────────────────────────────────
+
+// resolve the end of the period the subscriber has already paid for.
+//
+// `next_payment_date` is the next scheduled charge and, for an active
+// preapproval, also the end of the current paid period. mp keeps the field
+// after a cancellation. we only trust it when there is at least one
+// successful charge (`summarized.last_charged_date`): before the first
+// payment the date is just the first scheduled charge and does not
+// represent paid access.
+//
+// when `next_payment_date` is missing we derive the period end from the
+// last charge plus the recurrence (months or days).
+function resolveCurrentPeriodEnd(input: {
+  nextPaymentDate: string | null;
+  lastChargedDate: string | null;
+  frequency: number | null;
+  frequencyType: string | null;
+}): string | null {
+  if (!input.lastChargedDate) return null;
+  if (input.nextPaymentDate) return input.nextPaymentDate;
+  if (!input.frequency || !input.frequencyType) return null;
+
+  const lastCharged = new Date(input.lastChargedDate);
+  if (Number.isNaN(lastCharged.getTime())) return null;
+
+  const periodEnd = addRecurrence(
+    lastCharged,
+    input.frequency,
+    input.frequencyType
+  );
+  return periodEnd ? periodEnd.toISOString() : null;
+}
+
+function addRecurrence(
+  date: Date,
+  frequency: number,
+  frequencyType: string
+): Date | null {
+  if (frequencyType === "days") {
+    const next = new Date(date);
+    next.setUTCDate(next.getUTCDate() + frequency);
+    return next;
+  }
+
+  if (frequencyType !== "months") return null;
+
+  // clamp the day to the target month's last day (jan 31 + 1 month = feb 28).
+  const day = date.getUTCDate();
+  const next = new Date(date);
+  next.setUTCDate(1);
+  next.setUTCMonth(next.getUTCMonth() + frequency);
+  const lastDayOfMonth = new Date(
+    Date.UTC(next.getUTCFullYear(), next.getUTCMonth() + 1, 0)
+  ).getUTCDate();
+  next.setUTCDate(Math.min(day, lastDayOfMonth));
+  return next;
 }

@@ -41,6 +41,7 @@ docs {
       "status": "pending_cancellation",
       "requestedStatus": "cancelled",
       "providerSubscriptionId": "...",
+      "accessUntil": "2026-11-24T...",
       "cancellationRequestedAt": "2026-..."
     }
 
@@ -50,6 +51,9 @@ docs {
   payments-webhook handler persists. that webhook is the single
   source of truth for status, not this endpoint. the frontend can poll
   payments.subscriptions to observe the state change within ~5-10s.
+  accessUntil is the end of the paid period; the webhook stores
+  pending_cancellation with that date and a pg_cron job flips the row
+  to cancelled once it passes.
 
   replace the `userJwt` placeholder in the vars tab with a real user
   JWT. in local dev, mint one with the supabase admin api:

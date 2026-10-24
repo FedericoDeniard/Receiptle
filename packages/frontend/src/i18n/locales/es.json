@@ -568,6 +568,7 @@
   "accountBilling": {
     "title": "Cuenta y Facturación",
     "description": "Elegí el plan perfecto para tus necesidades y empezá a optimizar tu trabajo hoy.",
+    "accessUntil": "Acceso hasta el {{date}}",
     "currentPlan": {
       "title": "Plan actual",
       "paidTitle": "Plan pago",

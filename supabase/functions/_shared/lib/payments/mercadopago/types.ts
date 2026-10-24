@@ -69,6 +69,7 @@ export const authorizedPaymentResponseSchema = z.object({
   status: z.string(),
   preapproval_id: z.string().optional().nullable(),
   payment_id: z.number().optional().nullable(),
+  external_reference: z.string().optional().nullable(),
 });
 
 export type AuthorizedPaymentResponse = z.infer<

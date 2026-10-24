@@ -17,6 +17,7 @@ import { handleCorsPreflightRequest, getCorsHeaders } from "../_shared/cors.ts";
 import { requireSecretKey } from "../_shared/lib/api-keys.ts";
 import { getProvider } from "../_shared/lib/payments/index.ts";
 import type {
+  AuthorizedPaymentDetails,
   NormalizedWebhookEvent,
   PaymentDetails,
   WebhookVerification,
@@ -256,21 +257,19 @@ async function processEvent(
 
     case "subscription.payment": {
       // resolve the underlying preapproval id from the authorized_payment id,
-      // then enrich the event row. also link the subscription to the app user
-      // using the payment's external_reference: mp does not reliably propagate
-      // the plan's external_reference to the preapproval, so the preapproval
-      // event can arrive with user_id null and the payment is the only place
-      // that carries the value we stamped at checkout.
+      // then enrich the event row and link the subscription to the app user.
+      // mp does not reliably propagate the plan's external_reference to the
+      // preapproval, so recover it from the authorized payment, or from the
+      // payment itself when the authorized payment does not carry it yet.
       if (!event.providerPaymentId) {
         throw new Error("payment event without providerPaymentId");
       }
       // getAuthorizedPayment/getPayment are mercadopago-specific for now. keep
       // the dispatch generic by feature-detecting the methods.
       const maybeClient = provider as unknown as {
-        getAuthorizedPayment?: (id: string | number) => Promise<{
-          preapproval_id: string | null;
-          payment_id: number | null;
-        } | null>;
+        getAuthorizedPayment?: (
+          id: string | number
+        ) => Promise<AuthorizedPaymentDetails | null>;
         getPayment?: (id: string | number) => Promise<PaymentDetails | null>;
       };
       if (typeof maybeClient.getAuthorizedPayment !== "function") {
@@ -282,48 +281,68 @@ async function processEvent(
       const authPayment = await maybeClient.getAuthorizedPayment(
         event.providerPaymentId
       );
-      if (authPayment?.preapproval_id) {
+      if (authPayment?.preapprovalId) {
         await supabase
           .from("subscription_events")
-          .update({ provider_subscription_id: authPayment.preapproval_id })
+          .update({ provider_subscription_id: authPayment.preapprovalId })
           .eq("id", eventId);
       }
 
-      if (!authPayment?.preapproval_id) {
+      if (!authPayment?.preapprovalId) {
         console.warn(
-          "[payments-webhook] authorized payment has no preapproval_id; cannot link user",
+          "[payments-webhook] authorized payment has no preapproval id; cannot link user",
           { authorizedPaymentId: event.providerPaymentId }
         );
         return;
       }
+
+      // the authorized payment carries the same external_reference we stamp
+      // on the plan. use it directly when present: payment_id can still be
+      // null in the early event even though the payment already exists.
+      let externalReference = authPayment.externalReference;
+      let userId = asUserId(externalReference);
+      let payerEmail: string | null = null;
+
       if (
-        !authPayment.payment_id ||
-        typeof maybeClient.getPayment !== "function"
+        authPayment.paymentId &&
+        typeof maybeClient.getPayment === "function"
       ) {
-        console.warn(
-          "[payments-webhook] authorized payment has no payment_id; cannot link user",
-          {
-            preapprovalId: authPayment.preapproval_id,
-            authorizedPaymentId: event.providerPaymentId,
+        let payment: PaymentDetails | null = null;
+        try {
+          payment = await maybeClient.getPayment(authPayment.paymentId);
+        } catch (error) {
+          // if the authorized payment already gave us a usable user id, the
+          // payment lookup is only for payer_email and must not block linking.
+          if (!userId) throw error;
+          console.warn(
+            "[payments-webhook] getPayment failed; using authorized payment data",
+            {
+              paymentId: authPayment.paymentId,
+              message: error instanceof Error ? error.message : String(error),
+            }
+          );
+        }
+        if (payment) {
+          payerEmail = payment.payerEmail;
+          if (!userId) {
+            externalReference = payment.externalReference;
+            userId = asUserId(externalReference);
           }
-        );
-        return;
+        }
+        if (!payment && !userId) {
+          throw new Error(
+            `MP payment ${authPayment.paymentId} not found while linking subscription ${authPayment.preapprovalId}`
+          );
+        }
       }
 
-      const payment = await maybeClient.getPayment(authPayment.payment_id);
-      if (!payment) {
-        throw new Error(
-          `MP payment ${authPayment.payment_id} not found while linking subscription ${authPayment.preapproval_id}`
-        );
-      }
-      const externalReference = payment.externalReference;
-      const userId = asUserId(externalReference);
-      if (!externalReference || !userId) {
+      if (!userId) {
         console.info(
-          "[payments-webhook] payment has no usable external_reference; leaving user_id untouched",
+          "[payments-webhook] no usable external_reference; leaving user_id untouched",
           {
-            preapprovalId: authPayment.preapproval_id,
-            paymentId: authPayment.payment_id,
+            preapprovalId: authPayment.preapprovalId,
+            paymentId: authPayment.paymentId,
+            authorizedPaymentId: event.providerPaymentId,
           }
         );
         return;
@@ -333,8 +352,8 @@ async function processEvent(
         user_id: userId,
         external_reference: externalReference,
       };
-      if (payment.payerEmail) {
-        update.payer_email = payment.payerEmail;
+      if (payerEmail) {
+        update.payer_email = payerEmail;
       }
 
       // only fill user_id when it is still empty: the plan-level
@@ -344,7 +363,7 @@ async function processEvent(
         .from("subscriptions")
         .update(update)
         .eq("provider", providerName)
-        .eq("provider_subscription_id", authPayment.preapproval_id)
+        .eq("provider_subscription_id", authPayment.preapprovalId)
         .is("user_id", null)
         .select("id");
 
@@ -356,8 +375,8 @@ async function processEvent(
 
       if (updated && updated.length > 0) {
         console.info("[payments-webhook] linked subscription to user", {
-          preapprovalId: authPayment.preapproval_id,
-          paymentId: authPayment.payment_id,
+          preapprovalId: authPayment.preapprovalId,
+          paymentId: authPayment.paymentId,
           userId,
         });
         return;
@@ -367,7 +386,7 @@ async function processEvent(
         .from("subscriptions")
         .select("id, user_id")
         .eq("provider", providerName)
-        .eq("provider_subscription_id", authPayment.preapproval_id)
+        .eq("provider_subscription_id", authPayment.preapprovalId)
         .maybeSingle();
 
       if (existingError) {
@@ -381,7 +400,7 @@ async function processEvent(
           console.warn(
             "[payments-webhook] subscription already linked to another user; leaving it untouched",
             {
-              preapprovalId: authPayment.preapproval_id,
+              preapprovalId: authPayment.preapprovalId,
               existingUserId: existing.user_id,
               paymentUserId: userId,
             }
@@ -392,27 +411,25 @@ async function processEvent(
 
       // event order is not guaranteed: if the subscription row does not exist
       // yet, fetch the preapproval and upsert it with the recovered user.
-      const details = await provider.getSubscription(
-        authPayment.preapproval_id
-      );
+      const details = await provider.getSubscription(authPayment.preapprovalId);
       if (!details) {
         throw new Error(
-          `MP preapproval ${authPayment.preapproval_id} not found while linking subscription`
+          `MP preapproval ${authPayment.preapprovalId} not found while linking subscription`
         );
       }
       await upsertSubscription(
         supabase,
         providerName,
-        authPayment.preapproval_id,
+        authPayment.preapprovalId,
         {
           ...details,
           externalReference,
-          payerEmail: details.payerEmail ?? payment.payerEmail ?? null,
+          payerEmail: details.payerEmail || payerEmail || null,
         }
       );
       console.info("[payments-webhook] created and linked subscription", {
-        preapprovalId: authPayment.preapproval_id,
-        paymentId: authPayment.payment_id,
+        preapprovalId: authPayment.preapprovalId,
+        paymentId: authPayment.paymentId,
         userId,
       });
       return;

@@ -13,6 +13,7 @@
 // the payment's external_reference when the preapproval arrives without it.
 
 import type {
+  AuthorizedPaymentDetails,
   NormalizedWebhookEvent,
   PaymentDetails,
   PaymentProvider,
@@ -29,7 +30,6 @@ import {
   preapprovalWebhookSchema,
   authorizedPaymentWebhookSchema,
   updatePreapprovalPlanResponseSchema,
-  type AuthorizedPaymentResponse,
 } from "./types.ts";
 import { verifyMPWebhookSignature } from "./webhook.ts";
 
@@ -193,7 +193,7 @@ export class MercadoPagoProvider implements PaymentProvider {
   // promote to the interface when a second provider needs the same lookup.
   async getAuthorizedPayment(
     authorizedPaymentId: string | number
-  ): Promise<AuthorizedPaymentResponse | null> {
+  ): Promise<AuthorizedPaymentDetails | null> {
     const config = getMPConfig();
     const response = await fetch(
       `${config.apiBaseUrl}/authorized_payments/${encodeURIComponent(String(authorizedPaymentId))}`,
@@ -212,7 +212,13 @@ export class MercadoPagoProvider implements PaymentProvider {
     }
 
     const json = await response.json();
-    return authorizedPaymentResponseSchema.parse(json);
+    const parsed = authorizedPaymentResponseSchema.parse(json);
+
+    return {
+      preapprovalId: parsed.preapproval_id ?? null,
+      paymentId: parsed.payment_id ?? null,
+      externalReference: parsed.external_reference ?? null,
+    };
   }
 
   // not part of the PaymentProvider contract yet. used by the webhook router

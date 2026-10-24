@@ -726,6 +726,10 @@
       "system": {
         "label": "Notificación del sistema",
         "description": "Notificaciones generales del sistema (actualizaciones, alertas, eventos del sistema)."
+      },
+      "subscription_status_changed": {
+        "label": "Cambios en tu suscripción",
+        "description": "Notifica cuando tu plan cambia de estado (activado, pausado, cancelado, etc.)."
       }
     },
     "templates": {
@@ -764,6 +768,30 @@
       "new_transaction": {
         "title": "Nueva transacción",
         "body": "{{merchant}} · {{currency}} {{amount}}"
+      },
+      "subscription_authorized": {
+        "title": "Tu plan está activo",
+        "body": "Tu suscripción a {{plan}} está activa. Ya podés usar todas sus funciones."
+      },
+      "subscription_pending": {
+        "title": "Suscripción pendiente",
+        "body": "Tu suscripción a {{plan}} está pendiente de confirmación del pago."
+      },
+      "subscription_paused": {
+        "title": "Suscripción pausada",
+        "body": "Tu suscripción a {{plan}} fue pausada. Revisá tu método de pago."
+      },
+      "subscription_pending_cancellation": {
+        "title": "Cancelación programada",
+        "body": "Tu suscripción a {{plan}} se cancelará al final del período actual."
+      },
+      "subscription_cancelled": {
+        "title": "Suscripción cancelada",
+        "body": "Tu suscripción a {{plan}} fue cancelada."
+      },
+      "subscription_status_changed": {
+        "title": "Tu suscripción cambió",
+        "body": "Tu suscripción a {{plan}} cambió de estado: {{status}}."
       }
     }
   },

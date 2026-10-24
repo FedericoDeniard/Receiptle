@@ -56,6 +56,30 @@ const TEMPLATES: Record<string, { title: string; body: string }> = {
     title: "New transaction",
     body: "{{merchant}} · {{currency}} {{amount}}",
   },
+  subscription_authorized: {
+    title: "Your plan is active",
+    body: "Your {{plan}} subscription is active. All its features are now available.",
+  },
+  subscription_pending: {
+    title: "Subscription pending",
+    body: "Your {{plan}} subscription is waiting for payment confirmation.",
+  },
+  subscription_paused: {
+    title: "Subscription paused",
+    body: "Your {{plan}} subscription was paused. Check your payment method.",
+  },
+  subscription_pending_cancellation: {
+    title: "Cancellation scheduled",
+    body: "Your {{plan}} subscription will be cancelled at the end of the current period.",
+  },
+  subscription_cancelled: {
+    title: "Subscription cancelled",
+    body: "Your {{plan}} subscription was cancelled.",
+  },
+  subscription_status_changed: {
+    title: "Your subscription changed",
+    body: "Your {{plan}} subscription changed status: {{status}}.",
+  },
 };
 
 /**

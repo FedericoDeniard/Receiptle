@@ -71,6 +71,12 @@ export interface PaymentDetails {
   payerEmail: string | null;
 }
 
+export interface AuthorizedPaymentDetails {
+  preapprovalId: string | null;
+  paymentId: number | null;
+  externalReference: string | null;
+}
+
 export type WebhookVerification =
   | { valid: true; ts: number; requestId: string | null }
   | {

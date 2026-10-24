@@ -8,11 +8,11 @@
  * from postgrest and the admin routes redirect non-admins to /dashboard
  * at the route layer (defense in depth).
  *
- * All methods return `null` (or empty arrays) on RPC error and log with
- * the `[admin-rpc]` prefix, matching the convention in
- * `lib/payments-rpc.ts`. The admin panel calls `invalidateQueries` on
- * mutation success; read queries refetch via TanStack Query's normal
- * lifecycle.
+ * Read methods return `null` (or empty arrays) on RPC error and log with
+ * the `[admin-rpc]` prefix, except the revenue summary: a failed money
+ * read must not render a false zero, so it throws and the panel shows an
+ * error state. The admin panel calls `invalidateQueries` on mutation
+ * success; read queries refetch via TanStack Query's normal lifecycle.
  */
 import type { Database } from "../types/database.types";
 import { getSupabase } from "../lib/supabase";
@@ -61,6 +61,30 @@ export interface AdminPaymentEventRow {
   signature_valid: boolean | null;
   processing_status: string;
   processing_error: string | null;
+  transaction_amount: number | null;
+  currency_id: string | null;
+}
+
+export interface AdminRevenueTotal {
+  currency_id: string;
+  collected_total: number;
+  collected_30d: number;
+  payments: number;
+  mrr: number;
+  active_subs: number;
+}
+
+export interface AdminRevenueMonth {
+  month: string;
+  currency_id: string;
+  collected: number;
+  payments: number;
+}
+
+export interface AdminRevenueSummary {
+  totals: AdminRevenueTotal[];
+  monthly: AdminRevenueMonth[];
+  generated_at: string;
 }
 
 export interface AdminSeedRow {
@@ -117,17 +141,40 @@ export interface AdminTopConsumerRow {
   count: number;
 }
 
-async function rpc<T>(
+interface RpcResult<T> {
+  data: T | null;
+  error: { message: string } | null;
+}
+
+async function callRpc<T>(
   name: string,
   args: Record<string, unknown>
-): Promise<T | null> {
+): Promise<RpcResult<T>> {
   const supabase = await getSupabase();
   const { data, error } = await supabase
     .schema("payments")
     .rpc(name as never, args as never);
   if (error) {
     console.error(`[admin-rpc] ${name} failed:`, error);
-    return null;
+  }
+  return { data: data as T | null, error };
+}
+
+async function rpc<T>(
+  name: string,
+  args: Record<string, unknown>
+): Promise<T | null> {
+  const { data } = await callRpc<T>(name, args);
+  return data;
+}
+
+async function rpcOrThrow<T>(
+  name: string,
+  args: Record<string, unknown>
+): Promise<T> {
+  const { data, error } = await callRpc<T>(name, args);
+  if (error) {
+    throw new Error(error.message);
   }
   return data as T;
 }
@@ -237,6 +284,10 @@ export const adminService = {
 
   getStats(): Promise<AdminStats | null> {
     return rpc<AdminStats>("admin_stats", {});
+  },
+
+  getRevenueSummary(): Promise<AdminRevenueSummary> {
+    return rpcOrThrow<AdminRevenueSummary>("admin_revenue_summary", {});
   },
 
   listUsageLimits(): Promise<AdminUsageLimitRow[] | null> {

@@ -4,13 +4,16 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { AdminShell } from "../../components/admin/AdminShell";
 import { AdminDataTable } from "../../components/admin/AdminDataTable";
 import { AdminPagination } from "../../components/admin/AdminPagination";
+import { AdminRevenueBlock } from "../../components/admin/AdminRevenueBlock";
 import { PageHeader } from "../../components/admin/PageHeader";
 import {
   useAdminPaymentEvents,
   useAdminPaymentEventsCount,
 } from "../../hooks/useAdminPaymentEvents";
+import { useAdminRevenueSummary } from "../../hooks/useAdminRevenueSummary";
 import { adminTableFeatures } from "../../lib/admin-table-features";
 import type { AdminPaymentEventRow } from "../../services/admin.service";
+import { formatCurrency } from "../../utils/currency";
 import { formatDateSafe } from "../../utils/format";
 
 export function Payments() {
@@ -20,6 +23,7 @@ export function Payments() {
 
   const eventsQuery = useAdminPaymentEvents({ page, pageSize });
   const totalQuery = useAdminPaymentEventsCount();
+  const revenueQuery = useAdminRevenueSummary();
 
   const columns: ColumnDef<
     typeof adminTableFeatures,
@@ -46,6 +50,18 @@ export function Payments() {
       accessorKey: "payment_id",
       header: () => t("admin.payments.columns.paymentId"),
       cell: ({ row }) => `#${row.original.payment_id}`,
+    },
+    {
+      id: "amount",
+      enableSorting: false,
+      header: () => t("admin.payments.columns.amount"),
+      cell: ({ row }) =>
+        row.original.transaction_amount != null && row.original.currency_id
+          ? formatCurrency(
+              row.original.transaction_amount,
+              row.original.currency_id
+            )
+          : "—",
     },
     {
       id: "topic",
@@ -87,6 +103,12 @@ export function Payments() {
       <PageHeader
         title={t("admin.payments.title")}
         description={t("admin.payments.description")}
+      />
+
+      <AdminRevenueBlock
+        summary={revenueQuery.data}
+        loading={revenueQuery.isLoading}
+        error={revenueQuery.error as Error | null}
       />
 
       <p className="mt-2 text-xs text-[var(--text-secondary)]">

@@ -16,7 +16,6 @@ import { toast } from "../utils/toast";
 import { getEdgeFunctionErrorMessage } from "../utils/edge-function-errors";
 import type { MySubscription } from "../services/payments.service";
 import { FREE_PLAN } from "../services/pricing";
-import { formatDateOnly } from "../utils/format";
 import {
   ACTIVE_SUBSCRIPTION_STATUSES,
   isActiveSubscriptionStatus,
@@ -32,7 +31,7 @@ const CANCELLABLE_STATUSES = new Set(
 );
 
 export function AccountBilling() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { user, refreshUser } = useAuth();
   const userId = user?.id;
   const [searchParams, setSearchParams] = useSearchParams();
@@ -112,13 +111,6 @@ export function AccountBilling() {
 
   const isLoading = isLoadingSub || isLoadingPlans;
 
-  // pending_cancellation keeps the plan active until the paid period ends.
-  // surface the end date so the user knows exactly when access stops.
-  const accessUntil =
-    subscription?.status === "pending_cancellation"
-      ? (subscription.access_until ?? null)
-      : null;
-
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-8 flex flex-col gap-6">
       <section className="rounded-2xl border border-[var(--text-secondary)]/20 bg-[var(--bg-primary)] p-4 md:p-6 shadow-sm">
@@ -128,13 +120,6 @@ export function AccountBilling() {
         <p className="mt-1 text-xs md:text-sm text-[var(--text-secondary)]">
           {t("accountBilling.description")}
         </p>
-        {accessUntil && (
-          <p className="mt-3 inline-flex rounded-full bg-[var(--primary)]/10 px-3 py-1 text-xs font-medium text-[var(--primary)]">
-            {t("accountBilling.accessUntil", {
-              date: formatDateOnly(accessUntil, i18n.language),
-            })}
-          </p>
-        )}
       </section>
 
       {isLoading ? (

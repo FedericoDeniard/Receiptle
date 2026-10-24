@@ -5,12 +5,13 @@ import {
   type PricingCardData,
   readFeatureKeys,
 } from "../../services/pricing";
+import type { MySubscription } from "../../services/payments.service";
+import { formatDateOnly } from "../../utils/format";
 import { PricingCard } from "./PricingCard";
 
 type PlanRow = Database["payments"]["Tables"]["plans"]["Row"];
 type PlanVariantRow =
   Database["payments"]["Tables"]["plan_provider_variants"]["Row"];
-type SubscriptionRow = Database["payments"]["Tables"]["subscriptions"]["Row"];
 
 type PlanWithVariants = PlanRow & {
   plan_provider_variants: PlanVariantRow[];
@@ -19,9 +20,15 @@ type PlanWithVariants = PlanRow & {
 interface PricingGridProps {
   freePlan: typeof FREE_PLAN;
   dbPlans: PlanWithVariants[];
-  subscription: SubscriptionRow | null;
+  subscription: MySubscription | null;
   pendingKey: string | null;
   onSelect: (key: string) => void;
+}
+
+interface DbCard {
+  data: PricingCardData;
+  isCurrent: boolean;
+  accessUntilLabel: string | null;
 }
 
 // 3-up grid: free card (hardcoded) + db-backed plans. db plans
@@ -38,11 +45,11 @@ export function PricingGrid({
   pendingKey,
   onSelect,
 }: PricingGridProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // map db plans → pricing card data. we take the first active variant
   // for amount/currency. if a plan has no active variant we skip it.
-  const dbCards: PricingCardData[] = dbPlans
+  const dbCards: DbCard[] = dbPlans
     .map(plan => {
       const variant = plan.plan_provider_variants.find(v => v.is_active);
       if (!variant) return null;
@@ -53,6 +60,17 @@ export function PricingGrid({
         ["authorized", "pending", "paused", "pending_cancellation"].includes(
           subscription.status
         );
+      const accessUntil =
+        isCurrent &&
+        subscription?.status === "pending_cancellation" &&
+        subscription.access_until
+          ? subscription.access_until
+          : null;
+      const accessUntilLabel = accessUntil
+        ? t("accountBilling.accessUntil", {
+            date: formatDateOnly(accessUntil, i18n.language),
+          })
+        : null;
       // feature_keys isn't in the generated PlanRow type yet (depends on
       // a fresh `bun docker:db:types` after the migration runs). the
       // cast + readFeatureKeys helper is safe either way: returns [] if
@@ -72,11 +90,9 @@ export function PricingGrid({
         source: "db",
         dbPlan: plan,
       };
-      return { data, isCurrent };
+      return { data, isCurrent, accessUntilLabel };
     })
-    .filter(
-      (x): x is { data: PricingCardData; isCurrent: boolean } => x !== null
-    );
+    .filter((x): x is DbCard => x !== null);
 
   // highlight the most expensive db plan
   const maxPrice = Math.max(0, ...dbCards.map(c => c.data.pricePerMonth));
@@ -110,14 +126,16 @@ export function PricingGrid({
           data={freeData}
           isCurrent={freeIsCurrent}
           isLoading={pendingKey === freeData.key}
+          accessUntilLabel={null}
           onSelect={onSelect}
         />
-        {dbCards.map(({ data, isCurrent }) => (
+        {dbCards.map(({ data, isCurrent, accessUntilLabel }) => (
           <PricingCard
             key={data.key}
             data={data}
             isCurrent={isCurrent}
             isLoading={pendingKey === data.key}
+            accessUntilLabel={accessUntilLabel}
             onSelect={onSelect}
           />
         ))}

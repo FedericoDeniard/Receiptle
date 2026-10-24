@@ -8,12 +8,13 @@
 // preapproval_plan via POST /preapproval_plan; create-subscription
 // stamps our user.id into the plan's external_reference via PUT, then
 // reads it via getPlan() and hands back its `init_point` so the user
-// pays on mp's own site. mp propagates external_reference to the
-// resulting preapproval and dispatches the subscription_preapproval
-// webhook to payments-webhook, which writes payments.subscriptions.
+// pays on mp's own site. mp does not reliably propagate external_reference
+// to the resulting preapproval; payments-webhook recovers the user from
+// the payment's external_reference when the preapproval arrives without it.
 
 import type {
   NormalizedWebhookEvent,
+  PaymentDetails,
   PaymentProvider,
   PlanDetails,
   SubscriptionDetails,
@@ -23,6 +24,7 @@ import type {
 import { getMPConfig } from "./config.ts";
 import {
   authorizedPaymentResponseSchema,
+  paymentResponseSchema,
   preapprovalResponseSchema,
   preapprovalWebhookSchema,
   authorizedPaymentWebhookSchema,
@@ -30,8 +32,6 @@ import {
   type AuthorizedPaymentResponse,
 } from "./types.ts";
 import { verifyMPWebhookSignature } from "./webhook.ts";
-
-const MP_API_BASE = "https://api.mercadopago.com";
 
 export class MercadoPagoProvider implements PaymentProvider {
   readonly name = "mercadopago" as const;
@@ -47,7 +47,7 @@ export class MercadoPagoProvider implements PaymentProvider {
   ): Promise<{ id: string; initPoint: string } | null> {
     const config = getMPConfig();
     const response = await fetch(
-      `${MP_API_BASE}/preapproval_plan/${encodeURIComponent(planId)}`,
+      `${config.apiBaseUrl}/preapproval_plan/${encodeURIComponent(planId)}`,
       {
         method: "GET",
         headers: { Authorization: `Bearer ${config.accessToken}` },
@@ -68,7 +68,7 @@ export class MercadoPagoProvider implements PaymentProvider {
   ): Promise<SubscriptionDetails | null> {
     const config = getMPConfig();
     const response = await fetch(
-      `${MP_API_BASE}/preapproval/${encodeURIComponent(providerSubscriptionId)}`,
+      `${config.apiBaseUrl}/preapproval/${encodeURIComponent(providerSubscriptionId)}`,
       {
         method: "GET",
         headers: { Authorization: `Bearer ${config.accessToken}` },
@@ -155,7 +155,7 @@ export class MercadoPagoProvider implements PaymentProvider {
     }
 
     const response = await fetch(
-      `${MP_API_BASE}/preapproval_plan/${encodeURIComponent(planId)}`,
+      `${config.apiBaseUrl}/preapproval_plan/${encodeURIComponent(planId)}`,
       {
         method: "PUT",
         headers: {
@@ -196,7 +196,7 @@ export class MercadoPagoProvider implements PaymentProvider {
   ): Promise<AuthorizedPaymentResponse | null> {
     const config = getMPConfig();
     const response = await fetch(
-      `${MP_API_BASE}/authorized_payments/${encodeURIComponent(String(authorizedPaymentId))}`,
+      `${config.apiBaseUrl}/authorized_payments/${encodeURIComponent(String(authorizedPaymentId))}`,
       {
         method: "GET",
         headers: { Authorization: `Bearer ${config.accessToken}` },
@@ -213,6 +213,34 @@ export class MercadoPagoProvider implements PaymentProvider {
 
     const json = await response.json();
     return authorizedPaymentResponseSchema.parse(json);
+  }
+
+  // not part of the PaymentProvider contract yet. used by the webhook router
+  // to recover the app user from the payment's external_reference when mp
+  // does not propagate the plan's external_reference to the preapproval.
+  async getPayment(paymentId: string | number): Promise<PaymentDetails | null> {
+    const config = getMPConfig();
+    const response = await fetch(
+      `${config.apiBaseUrl}/v1/payments/${encodeURIComponent(String(paymentId))}`,
+      {
+        method: "GET",
+        headers: { Authorization: `Bearer ${config.accessToken}` },
+      }
+    );
+
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`MP getPayment failed (${response.status}): ${text}`);
+    }
+
+    const json = await response.json();
+    const parsed = paymentResponseSchema.parse(json);
+
+    return {
+      externalReference: parsed.external_reference ?? null,
+      payerEmail: parsed.payer?.email ?? null,
+    };
   }
 
   async verifyWebhookSignature(
@@ -234,7 +262,7 @@ export class MercadoPagoProvider implements PaymentProvider {
     const status = options?.status ?? "cancelled";
 
     const response = await fetch(
-      `${MP_API_BASE}/preapproval/${encodeURIComponent(providerSubscriptionId)}`,
+      `${config.apiBaseUrl}/preapproval/${encodeURIComponent(providerSubscriptionId)}`,
       {
         method: "PUT",
         headers: {

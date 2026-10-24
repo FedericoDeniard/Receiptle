@@ -393,7 +393,8 @@ control story. Implementation contract:
   `payments.admin_cancel_subscription`, `payments.admin_list_payment_events`,
   `payments.admin_list_seeds`, `payments.admin_retry_seed`,
   `payments.admin_stats`, `payments.admin_usage_limits`,
-  `payments.admin_user_usage_summary`, `payments.admin_usage_top_consumers`.
+  `payments.admin_user_usage_summary`, `payments.admin_usage_top_consumers`,
+  `payments.admin_revenue_summary`.
   Every one starts with the same admin guard — raise a `42501` if the
   caller does not have `role = 'admin'` in `public.user_roles`. The
   guard is intentionally duplicated per function (not extracted into a
@@ -407,6 +408,14 @@ control story. Implementation contract:
   webhook retry. The provider-side reconciliation is the
   `payments-webhook` job — this is best-effort UX for the panel, not a
   substitute for the webhook.
+- **Revenue ledger.** `payments.payments` holds one row per provider
+  charge, keyed by `(provider, provider_payment_id)`. It is written by
+  `payments-webhook` with `service_role`; RLS is enabled with no policy
+  for `authenticated`/`anon`, and the panel reads it through
+  `admin_revenue_summary`. Collected revenue counts approved charges
+  regardless of the subscription status (a cancelled subscription that
+  already paid still counts); only MRR is restricted to entitled
+  subscriptions.
 - **Seed retry.** `admin_retry_seed` resets a `failed`/`completed`
   seed row to `pending` and returns `(seed_id, connection_id, user_id)`.
   The frontend then calls `mastra-server /api/seed-emails` with the

@@ -41,3 +41,23 @@ export function formatDateOnly(
     day: "numeric",
   });
 }
+
+const monthYearFormatters = new Map<string, Intl.DateTimeFormat>();
+
+/**
+ * Formats a `YYYY-MM` month key as a short localized month + 2-digit year
+ * (e.g. "oct 26"). Formatters are cached per locale.
+ */
+export function formatMonthShort(month: string, locale?: string): string {
+  const key = locale ?? "";
+  let formatter = monthYearFormatters.get(key);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      year: "2-digit",
+      timeZone: "UTC",
+    });
+    monthYearFormatters.set(key, formatter);
+  }
+  return formatter.format(new Date(`${month}-01T00:00:00Z`));
+}

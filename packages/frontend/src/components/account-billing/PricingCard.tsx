@@ -6,6 +6,8 @@ interface PricingCardProps {
   data: PricingCardData;
   isCurrent: boolean;
   isLoading: boolean;
+  /** localized "access until <date>" label for a pending cancellation. */
+  accessUntilLabel: string | null;
   onSelect: (key: string) => void;
 }
 
@@ -32,6 +34,7 @@ function formatPrice(amount: number, currency: string): string {
 //   - tier name
 //   - price + period
 //   - per-label ("Per editor")
+//   - access-until label (pending cancellation only)
 //   - divider
 //   - CTA button
 //   - feature list with check icons
@@ -43,6 +46,7 @@ function PricingCard({
   data,
   isCurrent,
   isLoading,
+  accessUntilLabel,
   onSelect,
 }: PricingCardProps) {
   const { t } = useTranslation();
@@ -81,6 +85,12 @@ function PricingCard({
           {t("accountBilling.pricing.perMonth")}
         </span>
       </div>
+
+      {accessUntilLabel && (
+        <p className="mt-2 inline-flex w-fit rounded-full bg-[var(--primary)]/10 px-2.5 py-0.5 text-xs font-medium text-[var(--primary)]">
+          {accessUntilLabel}
+        </p>
+      )}
 
       {data.features.length > 0 && (
         <div className="my-5 h-px bg-[var(--text-secondary)]/15" />

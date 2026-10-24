@@ -288,6 +288,22 @@ async function processEvent(
           .eq("id", eventId);
       }
 
+      // persist the charge before anything else: the revenue ledger must not
+      // depend on the user-linking path below (which can return early). the
+      // status is deliberately left out here: the authorized payment mirror
+      // can report a later cancellation that must not erase an approved
+      // charge. only the payment resource below sets the revenue status.
+      if (authPayment) {
+        await upsertPayment(supabase, {
+          provider: providerName,
+          providerPaymentId: String(event.providerPaymentId),
+          providerSubscriptionId: authPayment.preapprovalId,
+          transactionAmount: authPayment.transactionAmount,
+          currencyId: authPayment.currencyId,
+          dateApproved: authPayment.dateApproved,
+        });
+      }
+
       if (!authPayment?.preapprovalId) {
         console.warn(
           "[payments-webhook] authorized payment has no preapproval id; cannot link user",
@@ -334,6 +350,23 @@ async function processEvent(
             `MP payment ${authPayment.paymentId} not found while linking subscription ${authPayment.preapprovalId}`
           );
         }
+
+        // the payment resource is the authoritative charge: prefer its
+        // status/amount/date over the authorized payment mirror. the status
+        // is only updated when the payment resource exists, so a later
+        // authorized-payment cancellation cannot erase an approved charge.
+        await upsertPayment(supabase, {
+          provider: providerName,
+          providerPaymentId: String(event.providerPaymentId),
+          providerChargeId: String(authPayment.paymentId),
+          providerSubscriptionId: authPayment.preapprovalId,
+          status: payment?.status,
+          statusDetail: payment?.statusDetail,
+          transactionAmount:
+            payment?.transactionAmount ?? authPayment.transactionAmount,
+          currencyId: payment?.currencyId ?? authPayment.currencyId,
+          dateApproved: payment?.dateApproved ?? authPayment.dateApproved,
+        });
       }
 
       if (!userId) {
@@ -457,6 +490,69 @@ async function processEvent(
       // already persisted with processing_status='received' (signature valid)
       // or 'rejected_signature'. nothing else to do.
       return;
+  }
+}
+
+interface PaymentUpsertInput {
+  provider: string;
+  providerPaymentId: string;
+  providerChargeId?: string | null;
+  providerSubscriptionId?: string | null;
+  status?: string | null;
+  statusDetail?: string | null;
+  transactionAmount?: number | null;
+  currencyId?: string | null;
+  dateApproved?: string | null;
+}
+
+// one row per charge. keyed by the authorized_payment id the webhook carries
+// as payment_id, so repeated deliveries (created + updated) update the same
+// row instead of duplicating revenue.
+async function upsertPayment(
+  supabase: ReturnType<typeof createClient>,
+  input: PaymentUpsertInput
+): Promise<void> {
+  const row: Record<string, unknown> = {
+    provider: input.provider,
+    provider_payment_id: input.providerPaymentId,
+  };
+
+  const optional: Record<string, unknown> = {
+    provider_charge_id: input.providerChargeId,
+    provider_subscription_id: input.providerSubscriptionId,
+    status: input.status,
+    status_detail: input.statusDetail,
+    transaction_amount: input.transactionAmount,
+    currency_id: input.currencyId,
+    date_approved: input.dateApproved,
+  };
+
+  // omit null/undefined so a later event cannot erase data a previous one
+  // already persisted (e.g. provider_charge_id or status).
+  for (const [column, value] of Object.entries(optional)) {
+    if (value !== undefined && value !== null) {
+      row[column] = value;
+    }
+  }
+
+  try {
+    const { error } = await supabase
+      .from("payments")
+      .upsert(row, { onConflict: "provider,provider_payment_id" });
+
+    // the ledger is secondary: a bookkeeping failure must not break the
+    // subscription/entitlement path. log and let the webhook continue.
+    if (error) {
+      console.error("[payments-webhook] failed to upsert payment", {
+        providerPaymentId: input.providerPaymentId,
+        message: error.message,
+      });
+    }
+  } catch (error) {
+    console.error("[payments-webhook] failed to upsert payment", {
+      providerPaymentId: input.providerPaymentId,
+      message: error instanceof Error ? error.message : String(error),
+    });
   }
 }
 

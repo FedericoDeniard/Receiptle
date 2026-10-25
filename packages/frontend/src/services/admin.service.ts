@@ -11,8 +11,11 @@
  * Read methods return `null` (or empty arrays) on RPC error and log with
  * the `[admin-rpc]` prefix, except the revenue summary: a failed money
  * read must not render a false zero, so it throws and the panel shows an
- * error state. The admin panel calls `invalidateQueries` on mutation
- * success; read queries refetch via TanStack Query's normal lifecycle.
+ * error state. The void mutation (`admin_set_user_role`) throws for the
+ * same reason: PostgREST answers void RPCs with an empty body, so `null`
+ * cannot distinguish a successful write from a failure.
+ * The admin panel calls `invalidateQueries` on mutation success; read
+ * queries refetch via TanStack Query's normal lifecycle.
  */
 import type { Database } from "../types/database.types";
 import { getSupabase } from "../lib/supabase";
@@ -179,6 +182,19 @@ async function rpcOrThrow<T>(
   return data as T;
 }
 
+/**
+ * Variant of `rpc` for RPCs that return `void`. PostgREST replies with an
+ * empty body, so `data` is always `null` and cannot double as the error
+ * sentinel. Throws the PostgREST message instead, so a successful write
+ * is never reported as a failure.
+ */
+async function rpcVoid(
+  name: string,
+  args: Record<string, unknown>
+): Promise<void> {
+  await rpcOrThrow<void>(name, args);
+}
+
 export const adminService = {
   listUsers(params: {
     search?: string;
@@ -200,8 +216,8 @@ export const adminService = {
     return rpc<AdminUserDetail[]>("admin_get_user", { p_user_id: userId });
   },
 
-  setUserRole(userId: string, role: AppRole): Promise<null> {
-    return rpc<null>("admin_set_user_role", {
+  setUserRole(userId: string, role: AppRole): Promise<void> {
+    return rpcVoid("admin_set_user_role", {
       p_user_id: userId,
       p_role: role,
     });

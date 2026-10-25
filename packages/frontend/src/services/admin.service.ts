@@ -8,11 +8,12 @@
  * from postgrest and the admin routes redirect non-admins to /dashboard
  * at the route layer (defense in depth).
  *
- * All methods return `null` (or empty arrays) on RPC error and log with
- * the `[admin-rpc]` prefix, matching the convention in
- * `lib/payments-rpc.ts`. The admin panel calls `invalidateQueries` on
- * mutation success; read queries refetch via TanStack Query's normal
- * lifecycle.
+ * Read methods return `null` (or empty arrays) on RPC error and log with
+ * the `[admin-rpc]` prefix. The void mutation (`admin_set_user_role`)
+ * throws instead: PostgREST answers void RPCs with an empty body, so
+ * `null` cannot distinguish a successful write from a failure.
+ * The admin panel calls `invalidateQueries` on mutation success; read
+ * queries refetch via TanStack Query's normal lifecycle.
  */
 import type { Database } from "../types/database.types";
 import { getSupabase } from "../lib/supabase";
@@ -132,6 +133,26 @@ async function rpc<T>(
   return data as T;
 }
 
+/**
+ * Variant of `rpc` for RPCs that return `void`. PostgREST replies with an
+ * empty body, so `data` is always `null` and cannot double as the error
+ * sentinel. Throws the PostgREST message instead, so a successful write
+ * is never reported as a failure.
+ */
+async function rpcVoid(
+  name: string,
+  args: Record<string, unknown>
+): Promise<void> {
+  const supabase = await getSupabase();
+  const { error } = await supabase
+    .schema("payments")
+    .rpc(name as never, args as never);
+  if (error) {
+    console.error(`[admin-rpc] ${name} failed:`, error);
+    throw new Error(error.message);
+  }
+}
+
 export const adminService = {
   listUsers(params: {
     search?: string;
@@ -153,8 +174,8 @@ export const adminService = {
     return rpc<AdminUserDetail[]>("admin_get_user", { p_user_id: userId });
   },
 
-  setUserRole(userId: string, role: AppRole): Promise<null> {
-    return rpc<null>("admin_set_user_role", {
+  setUserRole(userId: string, role: AppRole): Promise<void> {
+    return rpcVoid("admin_set_user_role", {
       p_user_id: userId,
       p_role: role,
     });

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
   ArrowDown,
@@ -192,6 +193,189 @@ interface CreateTransactionApprovalCardProps {
   onReject: () => void;
 }
 
+interface ReportResolution {
+  resolvedCurrentReport: ReportSummary | undefined;
+  currentReportResolved: boolean;
+  canConfirm: boolean;
+  showBatchReportError: boolean;
+}
+
+function deriveReportResolution(
+  part: CreateTransactionToolUIPart,
+  activeReportsById: Map<string, ReportSummary>,
+  reportsLoading: boolean,
+  reportsError: boolean,
+  current: Txn
+): ReportResolution {
+  const allTransactions = (part.input?.transactions ?? []).filter(
+    (t): t is Txn => t !== undefined && t !== null
+  );
+  const requestedReportIds = Array.from(
+    new Set(
+      allTransactions
+        .map(txn => txn.report_id)
+        .filter((v): v is string => typeof v === "string" && v.length > 0)
+    )
+  );
+  const hasReportRequests = requestedReportIds.length > 0;
+  const resolvedCurrentReport = current.report_id
+    ? activeReportsById.get(current.report_id)
+    : undefined;
+  const currentReportResolved = !current.report_id || !reportsLoading;
+  const anyReportInvalid =
+    reportsError ||
+    (!reportsLoading &&
+      requestedReportIds.some(id => activeReportsById.get(id) === undefined));
+  const reportsReady = !hasReportRequests || (!reportsLoading && !reportsError);
+
+  return {
+    resolvedCurrentReport,
+    currentReportResolved,
+    canConfirm: reportsReady && !anyReportInvalid,
+    showBatchReportError:
+      anyReportInvalid &&
+      (!current.report_id || resolvedCurrentReport !== undefined),
+  };
+}
+
+function formatAmountValue(
+  amount: number | undefined,
+  currency: string,
+  isIncome: boolean,
+  isExpense: boolean
+): string {
+  const amountDisplay = amount != null ? amount.toLocaleString() : "—";
+  const sign = isIncome ? "+" : isExpense ? "-" : "";
+  return `${sign}${currency} ${amountDisplay}`;
+}
+
+function TransactionCarousel({
+  currentIndex,
+  total,
+  onPrev,
+  onNext,
+}: {
+  currentIndex: number;
+  total: number;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex items-center justify-center gap-1 mb-4">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onPrev}
+        disabled={currentIndex === 0}
+        aria-label={t("assistant.createTransaction.previous")}
+        icon={<ChevronLeft size={16} />}
+      />
+      <span className="min-w-12 text-center text-sm tabular-nums text-[var(--text-secondary)]">
+        {t("assistant.createTransaction.counter", {
+          current: currentIndex + 1,
+          total,
+        })}
+      </span>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onNext}
+        disabled={currentIndex === total - 1}
+        aria-label={t("assistant.createTransaction.next")}
+        icon={<ChevronRight size={16} />}
+      />
+    </div>
+  );
+}
+
+function TransactionTypeHero({
+  isIncome,
+  isExpense,
+  amountValue,
+}: {
+  isIncome: boolean;
+  isExpense: boolean;
+  amountValue: string;
+}) {
+  return (
+    <>
+      <div className="flex justify-center mb-4">
+        <div
+          className={`p-4 rounded-2xl ${
+            isIncome
+              ? "bg-green-100 text-green-600"
+              : isExpense
+                ? "bg-red-100 text-red-600"
+                : "bg-zinc-100 text-zinc-600"
+          }`}
+        >
+          {isIncome ? (
+            <ArrowDown strokeWidth={3} size={32} />
+          ) : (
+            <ArrowUp strokeWidth={3} size={32} />
+          )}
+        </div>
+      </div>
+
+      <div className="text-center mb-5">
+        <p className="text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
+          {amountValue}
+        </p>
+      </div>
+    </>
+  );
+}
+
+function ReportUnavailableMessage({ t }: { t: TFunction }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-sm font-medium">
+        {t("assistant.createTransaction.reportUnavailable")}
+      </p>
+      <p className="text-xs text-rose-600/80">
+        {t("assistant.createTransaction.reportUnavailableHint")}
+      </p>
+    </div>
+  );
+}
+
+function ApprovalCardFooter({
+  canConfirm,
+  onApprove,
+  onReject,
+}: {
+  canConfirm: boolean;
+  onApprove: () => void;
+  onReject: () => void;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <footer className="mt-5 flex items-center justify-end gap-2">
+      <Button
+        variant="secondary"
+        size="sm"
+        icon={<XIcon size={16} />}
+        onClick={onReject}
+      >
+        {t("common.cancel")}
+      </Button>
+      {canConfirm && (
+        <Button
+          variant="primary"
+          size="sm"
+          icon={<CheckIcon size={16} />}
+          onClick={onApprove}
+        >
+          {t("common.confirm")}
+        </Button>
+      )}
+    </footer>
+  );
+}
+
 function CreateTransactionApprovalCard({
   part,
   current,
@@ -223,38 +407,22 @@ function CreateTransactionApprovalCard({
     return ids.map(id => tagsById.get(id)).filter((tag): tag is Tag => !!tag);
   }, [current, tagsById]);
 
-  const allTransactions = (part.input?.transactions ?? []).filter(
-    (t): t is Txn => t !== undefined && t !== null
+  const reports = deriveReportResolution(
+    part,
+    activeReportsById,
+    reportsLoading,
+    reportsError,
+    current
   );
-  const requestedReportIds = Array.from(
-    new Set(
-      allTransactions
-        .map(txn => txn.report_id)
-        .filter((v): v is string => typeof v === "string" && v.length > 0)
-    )
-  );
-  const hasReportRequests = requestedReportIds.length > 0;
-  const resolvedCurrentReport = current.report_id
-    ? activeReportsById.get(current.report_id)
-    : undefined;
-  const currentReportResolved = !current.report_id || !reportsLoading;
-  const anyReportInvalid =
-    reportsError ||
-    (!reportsLoading &&
-      requestedReportIds.some(id => activeReportsById.get(id) === undefined));
-  const reportsReady = !hasReportRequests || (!reportsLoading && !reportsError);
-  const canConfirm = reportsReady && !anyReportInvalid;
-  const showBatchReportError =
-    anyReportInvalid &&
-    (!current.report_id || resolvedCurrentReport !== undefined);
 
-  const type = current.transaction_type;
-  const isIncome = type === "income";
-  const isExpense = type === "expense";
-  const currency = current.currency ?? "USD";
-  const amountDisplay =
-    current.amount != null ? current.amount.toLocaleString() : "—";
-  const amountValue = `${isIncome ? "+" : isExpense ? "-" : ""}${currency} ${amountDisplay}`;
+  const isIncome = current.transaction_type === "income";
+  const isExpense = current.transaction_type === "expense";
+  const amountValue = formatAmountValue(
+    current.amount,
+    current.currency ?? "USD",
+    isIncome,
+    isExpense
+  );
 
   return (
     <article
@@ -269,55 +437,19 @@ function CreateTransactionApprovalCard({
       </p>
 
       {showCarousel && (
-        <div className="flex items-center justify-center gap-1 mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onPrev}
-            disabled={currentIndex === 0}
-            aria-label={t("assistant.createTransaction.previous")}
-            icon={<ChevronLeft size={16} />}
-          />
-          <span className="min-w-12 text-center text-sm tabular-nums text-[var(--text-secondary)]">
-            {t("assistant.createTransaction.counter", {
-              current: currentIndex + 1,
-              total,
-            })}
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onNext}
-            disabled={currentIndex === total - 1}
-            aria-label={t("assistant.createTransaction.next")}
-            icon={<ChevronRight size={16} />}
-          />
-        </div>
+        <TransactionCarousel
+          currentIndex={currentIndex}
+          total={total}
+          onPrev={onPrev}
+          onNext={onNext}
+        />
       )}
 
-      <div className="flex justify-center mb-4">
-        <div
-          className={`p-4 rounded-2xl ${
-            isIncome
-              ? "bg-green-100 text-green-600"
-              : isExpense
-                ? "bg-red-100 text-red-600"
-                : "bg-zinc-100 text-zinc-600"
-          }`}
-        >
-          {isIncome ? (
-            <ArrowDown strokeWidth={3} size={32} />
-          ) : (
-            <ArrowUp strokeWidth={3} size={32} />
-          )}
-        </div>
-      </div>
-
-      <div className="text-center mb-5">
-        <p className="text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
-          {amountValue}
-        </p>
-      </div>
+      <TransactionTypeHero
+        isIncome={isIncome}
+        isExpense={isExpense}
+        amountValue={amountValue}
+      />
 
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
         <DetailField
@@ -353,8 +485,8 @@ function CreateTransactionApprovalCard({
         {current.report_id && (
           <CreateReportField
             label={t("assistant.createTransaction.report")}
-            report={resolvedCurrentReport}
-            resolved={currentReportResolved}
+            report={reports.resolvedCurrentReport}
+            resolved={reports.currentReportResolved}
             t={t}
           />
         )}
@@ -377,40 +509,18 @@ function CreateTransactionApprovalCard({
         )}
       </dl>
 
-      {showBatchReportError && (
+      {reports.showBatchReportError && (
         <div className="mt-4 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-2 text-rose-700">
           <CircleAlert className="mt-0.5 size-4 shrink-0" />
-          <div className="min-w-0">
-            <p className="text-sm font-medium">
-              {t("assistant.createTransaction.reportUnavailable")}
-            </p>
-            <p className="text-xs text-rose-600/80">
-              {t("assistant.createTransaction.reportUnavailableHint")}
-            </p>
-          </div>
+          <ReportUnavailableMessage t={t} />
         </div>
       )}
 
-      <footer className="mt-5 flex items-center justify-end gap-2">
-        <Button
-          variant="secondary"
-          size="sm"
-          icon={<XIcon size={16} />}
-          onClick={onReject}
-        >
-          {t("common.cancel")}
-        </Button>
-        {canConfirm && (
-          <Button
-            variant="primary"
-            size="sm"
-            icon={<CheckIcon size={16} />}
-            onClick={onApprove}
-          >
-            {t("common.confirm")}
-          </Button>
-        )}
-      </footer>
+      <ApprovalCardFooter
+        canConfirm={reports.canConfirm}
+        onApprove={onApprove}
+        onReject={onReject}
+      />
     </article>
   );
 }
@@ -447,14 +557,7 @@ function CreateReportField({
         </dt>
         <dd className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-2 text-rose-700">
           <CircleAlert className="size-4 shrink-0 mt-0.5" />
-          <div className="min-w-0">
-            <p className="text-sm font-medium">
-              {t("assistant.createTransaction.reportUnavailable")}
-            </p>
-            <p className="text-xs text-rose-600/80">
-              {t("assistant.createTransaction.reportUnavailableHint")}
-            </p>
-          </div>
+          <ReportUnavailableMessage t={t} />
         </dd>
       </div>
     );

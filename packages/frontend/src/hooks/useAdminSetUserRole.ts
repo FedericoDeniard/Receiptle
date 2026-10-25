@@ -9,26 +9,10 @@ export interface SetUserRoleInput {
 
 export function useAdminSetUserRole() {
   const qc = useQueryClient();
-  return useMutation<null, Error, SetUserRoleInput>({
-    mutationFn: async ({ userId, role }) => {
-      const result = await adminService.setUserRole(userId, role);
-      if (result === null) {
-        throw new Error("Failed to update role");
-      }
-      return result;
-    },
-    onSuccess: (_, { userId }) => {
+  return useMutation<void, Error, SetUserRoleInput>({
+    mutationFn: ({ userId, role }) => adminService.setUserRole(userId, role),
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.admin.all });
-      qc.invalidateQueries({
-        queryKey: queryKeys.admin.userDetail(userId),
-      });
-      qc.invalidateQueries({
-        queryKey: queryKeys.admin.users({
-          search: undefined,
-          limit: 25,
-          offset: 0,
-        }),
-      });
     },
   });
 }

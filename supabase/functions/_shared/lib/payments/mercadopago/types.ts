@@ -78,9 +78,14 @@ export const preapprovalResponseSchema = z.object({
 export const authorizedPaymentResponseSchema = z.object({
   id: z.number(),
   status: z.string(),
+  status_detail: z.string().optional().nullable(),
   preapproval_id: z.string().optional().nullable(),
   payment_id: z.number().optional().nullable(),
   external_reference: z.string().optional().nullable(),
+  transaction_amount: z.number().optional().nullable(),
+  currency_id: z.string().optional().nullable(),
+  date_created: z.string().optional().nullable(),
+  date_approved: z.string().optional().nullable(),
 });
 
 export type AuthorizedPaymentResponse = z.infer<
@@ -93,6 +98,8 @@ export type AuthorizedPaymentResponse = z.infer<
 
 export const paymentResponseSchema = z.object({
   id: z.number(),
+  status: z.string().optional().nullable(),
+  status_detail: z.string().optional().nullable(),
   external_reference: z.string().optional().nullable(),
   payer: z
     .object({
@@ -100,6 +107,10 @@ export const paymentResponseSchema = z.object({
     })
     .optional()
     .nullable(),
+  transaction_amount: z.number().optional().nullable(),
+  currency_id: z.string().optional().nullable(),
+  date_created: z.string().optional().nullable(),
+  date_approved: z.string().optional().nullable(),
 });
 
 // ─── update preapproval plan response (PUT /preapproval_plan/{id}) ────────

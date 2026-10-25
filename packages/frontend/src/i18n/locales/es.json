@@ -1369,13 +1369,31 @@
         "received": "Recibido",
         "user": "Usuario",
         "paymentId": "Pago",
+        "amount": "Importe",
         "topic": "Topic",
         "action": "Acción",
         "signature": "Firma",
         "processing": "Procesamiento"
       },
       "signatureOk": "válida",
-      "signatureBad": "inválida"
+      "signatureBad": "inválida",
+      "revenue": {
+        "title": "Ganancias",
+        "description": "Cobros aprobados y suscripciones vigentes.",
+        "mrr": "MRR",
+        "mrrHint_one": "1 suscripción vigente",
+        "mrrHint_other": "{{count}} suscripciones vigentes",
+        "collected": "Cobrado total",
+        "collectedHint": "Incluye suscripciones canceladas",
+        "collected30d": "Últimos 30 días",
+        "collected30dHint": "Pagos aprobados en los últimos 30 días",
+        "payments": "Pagos",
+        "paymentsHint": "Pagos aprobados registrados",
+        "monthlyTitle": "Cobrado por mes",
+        "monthlyEmpty": "Todavía no hay cobros registrados.",
+        "refundsNote": "Los reintegros no se reconcilian automáticamente en esta versión.",
+        "error": "No se pudieron cargar las ganancias."
+      }
     },
     "seeds": {
       "title": "Jobs de seed",

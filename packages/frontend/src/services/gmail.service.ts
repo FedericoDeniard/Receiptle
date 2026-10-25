@@ -8,7 +8,7 @@ async function getEdgeFunctionsUrl(): Promise<string> {
   return `${config.supabase.url.replace(/\/+$/, "")}/functions/v1`;
 }
 
-interface GmailConnection {
+export interface GmailConnection {
   id: string;
   gmail_email: string;
   connected_at: string;

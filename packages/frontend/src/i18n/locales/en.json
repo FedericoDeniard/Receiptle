@@ -1369,13 +1369,31 @@
         "received": "Received",
         "user": "User",
         "paymentId": "Payment",
+        "amount": "Amount",
         "topic": "Topic",
         "action": "Action",
         "signature": "Signature",
         "processing": "Processing"
       },
       "signatureOk": "valid",
-      "signatureBad": "invalid"
+      "signatureBad": "invalid",
+      "revenue": {
+        "title": "Earnings",
+        "description": "Approved charges and active subscriptions.",
+        "mrr": "MRR",
+        "mrrHint_one": "1 active subscription",
+        "mrrHint_other": "{{count}} active subscriptions",
+        "collected": "Collected",
+        "collectedHint": "Includes cancelled subscriptions",
+        "collected30d": "Last 30 days",
+        "collected30dHint": "Approved charges in the last 30 days",
+        "payments": "Payments",
+        "paymentsHint": "Approved charges recorded",
+        "monthlyTitle": "Collected per month",
+        "monthlyEmpty": "No charges recorded yet.",
+        "refundsNote": "Refunds are not automatically reconciled in this version.",
+        "error": "Could not load earnings."
+      }
     },
     "seeds": {
       "title": "Seed jobs",

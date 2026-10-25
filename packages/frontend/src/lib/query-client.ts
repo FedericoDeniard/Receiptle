@@ -158,6 +158,7 @@ export const queryKeys = {
     seeds: (params: { status?: string; limit: number }) =>
       [...queryKeys.admin.all, "seeds", params] as const,
     stats: () => [...queryKeys.admin.all, "stats"] as const,
+    revenue: () => [...queryKeys.admin.all, "revenue"] as const,
     usageLimits: () => [...queryKeys.admin.all, "usage-limits"] as const,
     userUsageSummary: (userId: string) =>
       [...queryKeys.admin.all, "user-usage-summary", userId] as const,

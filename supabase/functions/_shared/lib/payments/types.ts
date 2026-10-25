@@ -74,12 +74,22 @@ export interface SubscriptionDetails {
 export interface PaymentDetails {
   externalReference: string | null;
   payerEmail: string | null;
+  status: string | null;
+  statusDetail: string | null;
+  transactionAmount: number | null;
+  currencyId: string | null;
+  dateApproved: string | null;
 }
 
 export interface AuthorizedPaymentDetails {
   preapprovalId: string | null;
   paymentId: number | null;
   externalReference: string | null;
+  status: string | null;
+  statusDetail: string | null;
+  transactionAmount: number | null;
+  currencyId: string | null;
+  dateApproved: string | null;
 }
 
 export type WebhookVerification =

@@ -224,6 +224,11 @@ export class MercadoPagoProvider implements PaymentProvider {
       preapprovalId: parsed.preapproval_id ?? null,
       paymentId: parsed.payment_id ?? null,
       externalReference: parsed.external_reference ?? null,
+      status: parsed.status ?? null,
+      statusDetail: parsed.status_detail ?? null,
+      transactionAmount: parsed.transaction_amount ?? null,
+      currencyId: parsed.currency_id ?? null,
+      dateApproved: parsed.date_approved ?? parsed.date_created ?? null,
     };
   }
 
@@ -252,6 +257,11 @@ export class MercadoPagoProvider implements PaymentProvider {
     return {
       externalReference: parsed.external_reference ?? null,
       payerEmail: parsed.payer?.email ?? null,
+      status: parsed.status ?? null,
+      statusDetail: parsed.status_detail ?? null,
+      transactionAmount: parsed.transaction_amount ?? null,
+      currencyId: parsed.currency_id ?? null,
+      dateApproved: parsed.date_approved ?? parsed.date_created ?? null,
     };
   }
 

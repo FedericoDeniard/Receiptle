@@ -11,6 +11,7 @@
     "test:guardrail:comparison": "cd supabase && deno test --no-check --env-file=\"functions/.env\" --allow-env --allow-sys=hostname --allow-net --allow-read=functions/_shared/ai/fixtures \"functions/_shared/ai/guardrail-comparison.test.ts\"",
     "test:seed-emails-usage": "cd supabase && unset OPENROUTER_API_KEY && deno test --no-check --env-file=\"functions/.env\" --allow-env --allow-net \"functions/_shared/seed-emails-usage.integration.test.ts\"",
     "test:usage-schema": "cd supabase && unset OPENROUTER_API_KEY && deno test --no-check --env-file=\"functions/.env\" --allow-env --allow-net \"functions/_shared/usage-schema.integration.test.ts\"",
+    "test:payments-types": "cd supabase && deno test --no-check functions/_shared/lib/payments/mercadopago/types.test.ts",
     "typecheck": "cd packages/frontend && bun x tsc --noEmit",
     "lint": "oxlint packages/frontend/src packages/landing/src",
     "lint:fix": "oxlint --fix packages/frontend/src packages/landing/src",

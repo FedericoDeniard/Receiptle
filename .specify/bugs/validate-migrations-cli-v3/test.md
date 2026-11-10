@@ -68,7 +68,7 @@ SUPABASE_PROJECT_ID	2026-01-18T13:53:54Z
 
 ## Residual Risks
 
-- **Deploy to Production not re-run yet.** The validate workflow is green, but `Deploy to Production` has not run since the fix; it will execute on the next push to `main` (merging PR #219).
+- **Deploy to Production reached the fix, then hit a second v3 prompt.** Run 42738740981 (merge of PR #219): `Aplicar migraciones` succeeded, but `Desplegar Edge Functions` failed with `Confirmation required: Deploy 12 Functions ... Re-run with --yes to confirm`. Fixed by passing `--yes` to `functions deploy`; needs a new `staging` → `main` merge to reach production.
 - **Version gap.** Local verification used CLI 3.0.0; CI ran the pinned 3.1.0, so the `[local_smtp]` and `--remote` behavior is confirmed on the pinned version.
 - **Guard coverage is narrow.** The guard step only detects `[inbucket]`; any other config key removed in a future CLI release still fails at runtime.
 - **Local dev container not rebuilt.** `Dockerfile.supabase-cli` was only statically verified (`npm install supabase@3.1.0`). No stack was running (`docker compose ps` empty), so `supabase start` / `docker:db:reset` were not exercised.

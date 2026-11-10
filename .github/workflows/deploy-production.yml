@@ -34,7 +34,7 @@ jobs:
         run: |
           if [ -d "supabase/functions" ] && [ "$(ls -A supabase/functions 2>/dev/null)" ]; then
             echo "📦 Desplegando Edge Functions con configuración desde config.toml..."
-            supabase functions deploy
+            supabase functions deploy --yes
             echo "✅ JWT verification configurado por función desde config.toml"
           else
             echo "⏭️  No hay Edge Functions para desplegar"

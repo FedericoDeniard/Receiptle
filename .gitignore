@@ -62,3 +62,10 @@ bruno/**/environments.bru
 !packages/frontend/public/*.png
 # Guardrail image fixtures are excluded from the test-assets rules
 !supabase/functions/_shared/ai/fixtures/images/*.jpg
+
+# Local agent / MCP config (machine-specific servers and paths)
+.claude/settings.local.json
+# Claude Code mirrors of the shared skills in .agents/skills (symlinks)
+.claude/skills/
+/.mcp.json
+/opencode.json

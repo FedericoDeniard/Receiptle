@@ -141,8 +141,10 @@ tool for the same job doubles maintenance and breaks the documented workflow.
 - **Local development**: runs through Docker Compose. Bun and the Supabase CLI
   MUST NOT be required on the host.
 - **Production**: deploys from `main` via GitHub Actions, applying migrations
-  with `supabase db push --include-all` and deploying all Edge Functions.
-  Migrations MUST be validated locally with `db push --dry-run` first.
+  with `supabase db push --include-all --remote --yes` and deploying all Edge
+  Functions. Migrations MUST be validated locally with
+  `db push --dry-run --remote` first. The Supabase CLI is pinned to `3.1.0`;
+  under v3 `db push` defaults to the local stack, so `--remote` is mandatory.
 
 ## Development Workflow and Quality Gates
 

@@ -4,12 +4,14 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
     steps:
       - name: Checkout código
@@ -18,11 +20,17 @@ jobs:
       - name: Instalar Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: "3.1.0"
+
+      - name: Verificar config.toml compatible con CLI v3
+        run: |
+          if grep -qE '^[[:space:]]*\[inbucket\]' supabase/config.toml; then
+            echo "::error file=supabase/config.toml::La sección [inbucket] fue eliminada en Supabase CLI v3. Renombrala a [local_smtp]."
+            exit 1
+          fi
 
       - name: Vincular proyecto de Supabase
         run: supabase link --project-ref $PROJECT_ID
 
       - name: Validar migraciones (dry-run)
-        run: supabase db push --dry-run
-
+        run: supabase db push --dry-run --remote --yes

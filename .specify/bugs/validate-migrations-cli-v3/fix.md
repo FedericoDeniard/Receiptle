@@ -3,11 +3,11 @@
 - **Slug**: validate-migrations-cli-v3
 - **Fixed**: 2026-11-09
 - **Assessment**: ./assessment.md
-- **Status**: partial
+- **Status**: fixed
 
 ## Summary
 
-Renamed the removed `[inbucket]` config section to `[local_smtp]` so the Supabase CLI v3 can load `supabase/config.toml`, and moved both workflows to the v3 `db push` contract (`--remote --yes`) with the CLI pinned to `3.1.0`. Local verification confirmed the config fix and the targeting fix, but surfaced one blocker the assessment had only flagged as an open question: `--remote` without a database password POSTs to the Management API `cli/login-role` endpoint and returns `403`, so the workflows stay red until a `SUPABASE_DB_PASSWORD` repository secret exists.
+Renamed the removed `[inbucket]` config section to `[local_smtp]` so the Supabase CLI v3 can load `supabase/config.toml`, and moved both workflows to the v3 `db push` contract (`--remote --yes`) with the CLI pinned to `3.1.0`. Local verification confirmed the config fix and the targeting fix, but surfaced a `403` from the Management API `cli/login-role` endpoint that suggested a `SUPABASE_DB_PASSWORD` secret was required. That turned out to be a local token privilege issue: in CI the `login-role` initialisation succeeds with `SUPABASE_ACCESS_TOKEN` and no database password. Run 42738450575 on commit `ce1166b` is green (see `./test.md`).
 
 ## Changes
 

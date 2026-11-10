@@ -4,7 +4,7 @@ RUN apk add --no-cache docker-cli
 RUN mkdir -p /opt/supabase-cli \
   && cd /opt/supabase-cli \
   && npm init -y \
-  && npm install supabase \
+  && npm install supabase@3.1.0 \
   && ln -sf /opt/supabase-cli/node_modules/.bin/supabase /usr/local/bin/supabase
 
 WORKDIR /workspace

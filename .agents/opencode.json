@@ -4,10 +4,7 @@
     "mercadopago": {
       "type": "remote",
       "url": "https://mcp.mercadopago.com/mcp",
-      "headers": {
-        "Authorization": "Bearer {file:/home/federico/.config/opencode/mp-access-token}"
-      },
-      "oauth": false,
+      "oauth": {},
       "enabled": true
     }
   }

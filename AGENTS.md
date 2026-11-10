@@ -217,7 +217,7 @@ Per `.agents/skills/use-realtime`: use `broadcast` (not `postgres_changes`) for 
 
 ## Production deploy
 
-- GitHub Actions (`.github/workflows/deploy-production.yml`): on push to `main`, `supabase db push --include-all` then `supabase functions deploy`. Validate locally first with `supabase db push --dry-run` (run by `validate-migrations.yml`).
+- GitHub Actions (`.github/workflows/deploy-production.yml`): on push to `main`, `supabase db push --include-all --remote --yes` then `supabase functions deploy`. Validate locally first with `supabase db push --dry-run --remote` (run by `validate-migrations.yml`). Under Supabase CLI v3 `db push` targets the **local** stack by default, so `--remote` is mandatory in CI. `--remote` skips `supabase link`'s temporary login role and instead authenticates with `SUPABASE_DB_PASSWORD`; the CLI version is pinned to `3.1.0` in both workflows and in `Dockerfile.supabase-cli`.
 - Production secrets: set edge function secrets via `supabase secrets set --env-file supabase/functions/.env`. `INTERNAL_FUNCTIONS_SECRET` must also be in Vault (`vault.create_secret` / `vault.update_secret`) because `renew_gmail_watches()` reads it from there. See `README.md` "Production secrets checklist" for the full list.
 - CORS in production is gated by `CORS_ALLOWED_ORIGINS` and `CORS_ALLOW_CREDENTIALS` env vars on the edge function side; the mastra-server uses `MASTRA_CORS_ORIGIN`.
 
